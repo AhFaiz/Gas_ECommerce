@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Product {
   id: string | number;
@@ -48,8 +50,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // Generate unique order ID
-      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      // Generate a proper UUID for the order ID instead of a string
+      const orderId = uuidv4();
       const totalPrice = Number(product.price) * formData.quantity;
       
       // Create order data matching the exact schema in the database
