@@ -54,71 +54,33 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // First, attempt to find if a customer with this email already exists
-      const { data: existingCustomer, error: lookupError } = await supabase
+      // Create customer directly without checking for existing one
+      // This avoids the infinite recursion issue with admin policies
+      const { data: customerData, error: customerError } = await supabase
         .from('customers')
+        .insert({
+          id: customerId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          alamat: formData.alamat
+        })
         .select('id')
-        .eq('email', formData.email)
-        .maybeSingle();
+        .single();
       
-      // Determine the customer ID to use
-      let finalCustomerId;
-      
-      if (lookupError) {
-        console.error('Error checking for existing customer:', lookupError.message);
-        toast.error('Error checking customer information');
+      if (customerError) {
+        console.error('Error creating customer:', customerError.message);
+        toast.error('Failed to create customer profile');
         setIsSubmitting(false);
         return;
       }
       
-      if (existingCustomer) {
-        // Use existing customer
-        finalCustomerId = existingCustomer.id;
-        console.log('Found existing customer:', finalCustomerId);
-        
-        const { error: updateError } = await supabase
-          .from('customers')
-          .update({
-            name: formData.name,
-            phone: formData.phone,
-            alamat: formData.alamat
-          })
-          .eq('id', finalCustomerId);
-        
-        if (updateError) {
-          console.error('Error updating customer:', updateError.message);
-          // Continue with order creation anyway
-        }
-      } else {
-        // Create new customer
-        const { data: newCustomer, error: createError } = await supabase
-          .from('customers')
-          .insert({
-            id: customerId,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            alamat: formData.alamat
-          })
-          .select('id')
-          .single();
-        
-        if (createError) {
-          console.error('Error creating new customer:', createError.message);
-          toast.error('Failed to create customer profile: ' + createError.message);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        finalCustomerId = newCustomer.id;
-      }
-      
-      // Create order record with new fields
+      // Create order record
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
-          customer_id: finalCustomerId,
+          customer_id: customerData.id,
           total: totalPrice,
           payment_method: 'cash', // Default to cash
           status: 'pending',
