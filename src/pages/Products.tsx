@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -12,9 +11,8 @@ interface Product {
   price: number;
   image: string;
   category: string;
-  is_new: boolean;
   stock: number;
-  created_at?: string; // Add created_at field as optional
+  is_new?: boolean;
 }
 
 const categories = [
@@ -36,7 +34,6 @@ const priceRanges = [
 ];
 
 const sortOptions = [
-  { label: 'Newest', value: 'newest' },
   { label: 'Price: Low to High', value: 'price-asc' },
   { label: 'Price: High to Low', value: 'price-desc' },
   { label: 'Name A-Z', value: 'name-asc' },
@@ -47,7 +44,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('price-asc');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +58,7 @@ const Products = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('products')
-          .select('*');
+          .select('id, name, price, image, category, stock, is_new');
         
         if (error) {
           console.error('Error fetching products:', error);
@@ -124,14 +121,6 @@ const Products = () => {
     
     // Apply sorting
     switch (sortBy) {
-      case 'newest':
-        // Sort by created_at (newest first)
-        result.sort((a, b) => {
-          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-          return dateB - dateA;
-        });
-        break;
       case 'price-asc':
         result.sort((a, b) => a.price - b.price);
         break;
@@ -156,7 +145,7 @@ const Products = () => {
     setSearchQuery('');
     setSelectedCategory('All');
     setSelectedPriceRange('all');
-    setSortBy('newest');
+    setSortBy('price-asc');
   };
 
   return (
