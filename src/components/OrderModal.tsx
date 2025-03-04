@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,27 +54,44 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // Look up customer first
-      console.log('Looking up customer by email:', formData.email);
-      const { data: existingCustomer, error: lookupError } = await supabase
+      // First, let's try to directly create the customer
+      console.log('Attempting to create customer with email:', formData.email);
+      let customerId: string;
+      
+      // Direct insert approach - if it succeeds we have a new customer
+      const { data: newCustomerData, error: createError } = await supabase
         .from('customers')
-        .select('*')
-        .eq('email', formData.email);
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address
+        })
+        .select('id')
+        .single();
       
-      if (lookupError) {
-        console.error('Error looking up customer:', lookupError);
-        toast.error('Failed to process order: Customer lookup error');
-        setIsSubmitting(false);
-        return;
-      }
-
-      let customerId;
-      
-      // If customer exists, update them
-      if (existingCustomer && existingCustomer.length > 0) {
-        console.log('Customer found. Updating customer info:', existingCustomer[0].id);
-        customerId = existingCustomer[0].id;
+      // If unique constraint error (email already exists), handle it by finding the existing customer
+      if (createError) {
+        console.log('Customer creation error:', createError.message);
         
+        // Fetch the existing customer by email
+        const { data: existingCustomers, error: lookupError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('email', formData.email)
+          .limit(1);
+        
+        if (lookupError || !existingCustomers || existingCustomers.length === 0) {
+          console.error('Error finding existing customer:', lookupError?.message || 'No customer found');
+          toast.error('Failed to process order: Customer lookup error');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        customerId = existingCustomers[0].id;
+        console.log('Found existing customer with ID:', customerId);
+        
+        // Update the existing customer data
         const { error: updateError } = await supabase
           .from('customers')
           .update({
@@ -82,46 +100,35 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
             address: formData.address
           })
           .eq('id', customerId);
-          
+        
         if (updateError) {
-          console.error('Error updating customer:', updateError);
-          toast.error('Failed to process order: Customer update error');
+          console.error('Error updating customer data:', updateError);
+          toast.error('Failed to update customer information');
           setIsSubmitting(false);
           return;
         }
-      } 
-      // Otherwise create a new customer
-      else {
-        console.log('Customer not found. Creating new customer.');
-        const { data: newCustomer, error: createError } = await supabase
-          .from('customers')
-          .insert({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address
-          })
-          .select('id');
-        
-        if (createError) {
-          console.error('Error creating customer:', createError);
-          toast.error('Failed to process order: Customer creation error');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        if (!newCustomer || newCustomer.length === 0) {
+      } else {
+        // We successfully created a new customer
+        if (!newCustomerData) {
           console.error('No customer ID returned after creation');
           toast.error('Failed to process order: Customer creation error');
           setIsSubmitting(false);
           return;
         }
         
-        customerId = newCustomer[0].id;
+        customerId = newCustomerData.id;
+        console.log('Created new customer with ID:', customerId);
       }
       
+      if (!customerId) {
+        console.error('No customer ID available for order creation');
+        toast.error('Failed to process order: Missing customer data');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Create order record
       console.log('Creating order with customer ID:', customerId);
-      // Create order
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
