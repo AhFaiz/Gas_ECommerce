@@ -49,13 +49,14 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // Generate unique order ID
+      // Generate unique order ID and customer ID
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // Create customer directly without checking for existing one
-      // This avoids the infinite recursion issue with admin policies
+      console.log('Creating new customer with ID:', customerId);
+      
+      // Insert customer data first
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .insert({
@@ -69,29 +70,36 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         .single();
       
       if (customerError) {
-        console.error('Error creating customer:', customerError.message);
-        toast.error('Failed to create customer profile');
+        console.error('Error creating customer:', customerError);
+        toast.error('Gagal membuat profil pelanggan: ' + customerError.message);
         setIsSubmitting(false);
         return;
       }
       
+      console.log('Customer created successfully, ID:', customerData.id);
+      console.log('Creating order with ID:', orderId);
+      
       // Create order record
+      const orderData = {
+        id: orderId,
+        customer_id: customerData.id,
+        total: totalPrice,
+        payment_method: 'cash',
+        status: 'pending',
+        produk: product.name,
+        jumlah: formData.quantity,
+        tanggal: new Date().toISOString()
+      };
+      
+      console.log('Order data to insert:', orderData);
+      
       const { error: orderError } = await supabase
         .from('orders')
-        .insert({
-          id: orderId,
-          customer_id: customerData.id,
-          total: totalPrice,
-          payment_method: 'cash', // Default to cash
-          status: 'pending',
-          produk: product.name,
-          jumlah: formData.quantity,
-          tanggal: new Date().toISOString()
-        });
+        .insert(orderData);
 
       if (orderError) {
         console.error('Order creation error:', orderError);
-        toast.error('Failed to create order: ' + orderError.message);
+        toast.error('Gagal membuat pesanan: ' + orderError.message);
         setIsSubmitting(false);
         return;
       }
@@ -115,8 +123,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       
     } catch (error) {
       console.error('Exception processing order:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
+      toast.error('Terjadi kesalahan yang tidak terduga');
       setIsSubmitting(false);
     }
   };
