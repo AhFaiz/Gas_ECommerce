@@ -39,9 +39,10 @@ const AdminProducts = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log('Fetching products from Supabase...');
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, image, category, stock, is_new');
+        .select('*');
         
       if (error) {
         console.error('Error fetching products:', error);
@@ -51,6 +52,7 @@ const AdminProducts = () => {
       }
         
       if (data && Array.isArray(data)) {
+        console.log('Products loaded successfully:', data.length);
         setProducts(data as Product[]);
       } else {
         setProducts([]);
@@ -136,8 +138,12 @@ const AdminProducts = () => {
     setError(null);
     
     try {
+      console.log('Submitting product data:', formData);
+      
       if (currentProduct) {
         // Update existing product
+        console.log('Updating product with ID:', currentProduct.id);
+        
         const { error } = await supabase
           .from('products')
           .update({
@@ -152,17 +158,18 @@ const AdminProducts = () => {
           
         if (error) {
           console.error('Error updating product:', error);
-          setError('Failed to update product: ' + error.message);
+          setError(`Failed to update product: ${error.message || error.details || 'Unknown error'}`);
           toast.error('Failed to update product');
           return;
         }
         
+        console.log('Product updated successfully');
         toast.success('Product updated successfully!');
         handleCloseModal();
         fetchProducts();
       } else {
         // Create new product
-        console.log('Creating product with data:', formData);
+        console.log('Creating a new product');
         
         const { data, error } = await supabase
           .from('products')
@@ -178,19 +185,19 @@ const AdminProducts = () => {
           
         if (error) {
           console.error('Error creating product:', error);
-          setError('Failed to create product: ' + error.message);
+          setError(`Failed to create product: ${error.message || error.details || 'Unknown error'}`);
           toast.error('Failed to create product');
           return;
         }
         
-        console.log('Product created:', data);
+        console.log('Product created successfully:', data);
         toast.success('Product added successfully!');
         handleCloseModal();
         fetchProducts();
       }
     } catch (error: any) {
       console.error('Exception handling product:', error);
-      setError('An unexpected error occurred: ' + error.message);
+      setError(`An unexpected error occurred: ${error.message || 'Unknown error'}`);
       toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
@@ -200,6 +207,8 @@ const AdminProducts = () => {
   const handleDeleteProduct = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
+        console.log('Deleting product with ID:', id);
+        
         const { error } = await supabase
           .from('products')
           .delete()
@@ -207,15 +216,16 @@ const AdminProducts = () => {
           
         if (error) {
           console.error('Error deleting product:', error);
-          toast.error('Failed to delete product');
+          toast.error(`Failed to delete product: ${error.message || error.details || 'Unknown error'}`);
           return;
         }
         
+        console.log('Product deleted successfully');
         toast.success('Product deleted successfully!');
         fetchProducts();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Exception deleting product:', error);
-        toast.error('An unexpected error occurred');
+        toast.error(`Error deleting product: ${error.message || 'Unknown error'}`);
       }
     }
   };

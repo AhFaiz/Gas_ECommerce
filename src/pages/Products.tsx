@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -43,11 +42,11 @@ const Products = () => {
         setIsLoading(true);
         setError(null);
         
-        // Use .select() without any joins to avoid potential RLS issues
+        // Use simplified query to avoid RLS errors
         console.log('Fetching products from Supabase...');
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, image, category, stock, is_new');
+          .select('*');
         
         if (error) {
           console.error('Error fetching products:', error);
