@@ -50,11 +50,12 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // Generate a proper UUID for the order ID instead of a string
+      // Generate a proper UUID for the order ID
       const orderId = uuidv4();
       const totalPrice = Number(product.price) * formData.quantity;
       
       // Create order data matching the exact schema in the database
+      // Ensure status is set to 'Pending' which should be a valid value in the constraint
       const orderData = {
         id: orderId,
         customer_name: formData.name,
@@ -64,7 +65,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         product_id: product.id.toString(),
         quantity: formData.quantity,
         total_price: totalPrice,
-        status: 'Pending', // Use 'Pending' as it's a valid status in the database
+        status: 'Pending', // This must match a valid value in the database check constraint
       };
       
       console.log('Creating order with data:', orderData);
