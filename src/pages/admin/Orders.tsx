@@ -225,6 +225,7 @@ const AdminOrders = () => {
     }
   };
 
+  // Function to fetch orders with enhanced approach prioritizing successful retrieval
   const fetchOrders = async () => {
     setLoading(true);
     setFetchError(null);
