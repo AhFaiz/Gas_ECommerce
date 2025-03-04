@@ -2,98 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-// Sample product data
-const productsData = [
-  {
-    id: 1,
-    name: 'Premium Household LPG Cylinder',
-    price: 45.99,
-    image: 'https://images.unsplash.com/photo-1585105583421-5cb5f30eea6d?q=80&w=1883',
-    category: 'Household',
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: 'Industrial Propane Gas Tank',
-    price: 129.99,
-    image: 'https://images.unsplash.com/photo-1599059026939-1a4cd20732ef?q=80&w=1898',
-    category: 'Industrial',
-  },
-  {
-    id: 3,
-    name: 'Portable Camping Gas Canister',
-    price: 19.95,
-    image: 'https://images.unsplash.com/photo-1635859691068-54aef99a15fa?q=80&w=2069',
-    category: 'Portable',
-    isNew: true,
-  },
-  {
-    id: 4,
-    name: 'Commercial Grade Natural Gas Regulator',
-    price: 78.50,
-    image: 'https://images.unsplash.com/photo-1589802757245-d10a4135b023?q=80&w=2070',
-    category: 'Commercial',
-  },
-  {
-    id: 5,
-    name: 'High-Pressure Gas Cylinder for Industrial Use',
-    price: 189.95,
-    image: 'https://images.unsplash.com/photo-1589802757271-5e70817436fb?q=80&w=2070',
-    category: 'Industrial',
-  },
-  {
-    id: 6,
-    name: 'Compact LPG Cylinder for Home Cooking',
-    price: 39.99,
-    image: 'https://images.unsplash.com/photo-1642543492483-4bcabf0a63c7?q=80&w=2070',
-    category: 'Household',
-  },
-  {
-    id: 7,
-    name: 'Restaurant-Grade Propane System',
-    price: 249.99,
-    image: 'https://images.unsplash.com/photo-1623491959225-382aba5597b3?q=80&w=2071',
-    category: 'Commercial',
-    isNew: true,
-  },
-  {
-    id: 8,
-    name: 'Ultralight Backpacking Gas Canister',
-    price: 15.50,
-    image: 'https://images.unsplash.com/photo-1619170743049-406d053e96bd?q=80&w=2070',
-    category: 'Portable',
-  },
-  {
-    id: 9,
-    name: 'Automatic Gas Leak Detector',
-    price: 59.95,
-    image: 'https://images.unsplash.com/photo-1585123388867-3bfe6dd4bdbf?q=80&w=2070',
-    category: 'Accessories',
-  },
-  {
-    id: 10,
-    name: 'High BTU Outdoor Propane Heater',
-    price: 179.99,
-    image: 'https://images.unsplash.com/photo-1605108040941-7c762d5ed4e4?q=80&w=1887',
-    category: 'Outdoor',
-  },
-  {
-    id: 11,
-    name: 'Digital Gas Pressure Regulator',
-    price: 89.99,
-    image: 'https://images.unsplash.com/photo-1517439270744-8c9e4c4206b6?q=80&w=1899',
-    category: 'Accessories',
-  },
-  {
-    id: 12,
-    name: 'Refillable BBQ Gas Cylinder',
-    price: 64.50,
-    image: 'https://images.unsplash.com/photo-1597739239353-50270a473397?q=80&w=2070',
-    category: 'Outdoor',
-    isNew: true,
-  }
-];
+// Types
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  is_new: boolean;
+  stock: number;
+}
 
 const categories = [
   'All',
@@ -126,13 +47,42 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [filteredProducts, setFilteredProducts] = useState(productsData);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   
+  // Fetch products from Supabase
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching products:', error);
+          toast.error('Failed to load products');
+          return;
+        }
+        
+        setProducts(data as Product[]);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Exception fetching products:', error);
+        toast.error('An unexpected error occurred');
+        setIsLoading(false);
+      }
+    }
+    
+    fetchProducts();
+  }, []);
+  
   // Apply filters and sorting
   useEffect(() => {
-    let result = [...productsData];
+    let result = [...products];
     let filterCount = 0;
     
     // Apply search filter
@@ -174,7 +124,8 @@ const Products = () => {
     // Apply sorting
     switch (sortBy) {
       case 'newest':
-        // Assuming newest is default order
+        // Sort by created_at (newest first)
+        result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         break;
       case 'price-asc':
         result.sort((a, b) => a.price - b.price);
@@ -194,7 +145,7 @@ const Products = () => {
     
     setActiveFiltersCount(filterCount);
     setFilteredProducts(result);
-  }, [searchQuery, selectedCategory, selectedPriceRange, sortBy]);
+  }, [searchQuery, selectedCategory, selectedPriceRange, sortBy, products]);
   
   const clearFilters = () => {
     setSearchQuery('');
@@ -339,7 +290,11 @@ const Products = () => {
             <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
               <div>
                 <p className="text-foreground/70">
-                  Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products
+                  {isLoading ? (
+                    'Loading products...'
+                  ) : (
+                    <>Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products</>
+                  )}
                 </p>
               </div>
               
@@ -360,7 +315,21 @@ const Products = () => {
             </div>
             
             {/* Products */}
-            {filteredProducts.length > 0 ? (
+            {isLoading ? (
+              // Loading skeleton
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="w-full h-64 bg-gray-200 animate-pulse"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4"></div>
+                      <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                      <div className="h-6 bg-gray-200 rounded animate-pulse w-1/4"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product, index) => (
                   <div 
@@ -368,7 +337,14 @@ const Products = () => {
                     className="animate-fade-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <ProductCard {...product} />
+                    <ProductCard 
+                      id={product.id} 
+                      name={product.name} 
+                      price={product.price} 
+                      image={product.image} 
+                      category={product.category} 
+                      isNew={product.is_new}
+                    />
                   </div>
                 ))}
               </div>
