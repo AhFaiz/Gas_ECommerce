@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,35 +50,72 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // 1. Create a unique order ID 
+      // Generate unique order ID
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // 2. Insert customer data directly without upsert which is causing the error
-      console.log('Creating customer...');
-      const { data: customerData, error: customerError } = await supabase
+      // Check if customer with this email already exists
+      console.log('Checking if customer exists...');
+      const { data: existingCustomer, error: lookupError } = await supabase
         .from('customers')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address
-        })
         .select('id')
-        .single();
-
-      if (customerError) {
-        console.error('Error creating customer:', customerError);
-        toast.error('Failed to process order: Customer data error');
+        .eq('email', formData.email)
+        .maybeSingle();
+        
+      if (lookupError) {
+        console.error('Error looking up customer:', lookupError);
+        toast.error('Failed to process order: Customer lookup error');
         setIsSubmitting(false);
         return;
       }
-
-      const customerId = customerData.id;
       
-      // 3. Create order
+      let customerId;
+      
+      // If customer doesn't exist, create new one
+      if (!existingCustomer) {
+        console.log('Creating new customer...');
+        const { data: newCustomer, error: createError } = await supabase
+          .from('customers')
+          .insert({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address
+          })
+          .select('id')
+          .single();
+          
+        if (createError) {
+          console.error('Error creating customer:', createError);
+          toast.error('Failed to process order: Customer creation error');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        customerId = newCustomer.id;
+      } else {
+        customerId = existingCustomer.id;
+        
+        // Update existing customer info
+        console.log('Updating existing customer...');
+        const { error: updateError } = await supabase
+          .from('customers')
+          .update({
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address
+          })
+          .eq('id', customerId);
+          
+        if (updateError) {
+          console.error('Error updating customer:', updateError);
+          // Continue with order creation even if update fails
+          console.log('Continuing with order despite customer update error');
+        }
+      }
+      
+      // Create order
       console.log('Creating order...');
-      
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -95,7 +133,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         return;
       }
 
-      // 4. Create order item - Convert product_id to string to ensure type compatibility
+      // Create order item
       console.log('Creating order item...');
       const productIdString = String(product.id); // Convert to string to fix type issue
       
