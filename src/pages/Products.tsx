@@ -14,6 +14,7 @@ interface Product {
   category: string;
   is_new: boolean;
   stock: number;
+  created_at?: string; // Add created_at field as optional
 }
 
 const categories = [
@@ -125,7 +126,11 @@ const Products = () => {
     switch (sortBy) {
       case 'newest':
         // Sort by created_at (newest first)
-        result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        result.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
         break;
       case 'price-asc':
         result.sort((a, b) => a.price - b.price);
@@ -343,7 +348,7 @@ const Products = () => {
                       price={product.price} 
                       image={product.image} 
                       category={product.category} 
-                      isNew={product.is_new}
+                      isNew={!!product.is_new} // Ensure boolean type with double negation
                     />
                   </div>
                 ))}
