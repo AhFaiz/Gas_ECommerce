@@ -23,8 +23,8 @@ const AdminLogin = () => {
     
     // Simple authentication (in a production app, this would be a secure API call)
     setTimeout(() => {
-      // For demonstration, we're using hardcoded credentials
-      if (credentials.username === 'admin' && credentials.password === 'password') {
+      // Updated credentials to admin123/admin123
+      if (credentials.username === 'admin123' && credentials.password === 'admin123') {
         localStorage.setItem('adminAuthenticated', 'true');
         toast.success('Login successful!');
         navigate('/admin/dashboard');
