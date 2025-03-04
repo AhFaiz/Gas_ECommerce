@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,8 +52,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // Instead of creating a separate customer record, directly insert into orders table
-      // with all customer details, as per the orders table schema
+      // Create order data matching the exact schema in the database
       const orderData = {
         id: orderId,
         customer_name: formData.name,
@@ -64,7 +62,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         product_id: product.id.toString(),
         quantity: formData.quantity,
         total_price: totalPrice,
-        status: 'Pending', // Capitalize status to match what the Orders page expects
+        status: 'Pending', // Status now has a default in the database
       };
       
       console.log('Creating order with data:', orderData);
@@ -75,8 +73,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
 
       if (orderError) {
         console.error('Order creation error:', orderError);
-        const errorMessage = orderError.message || 'Terjadi kesalahan saat membuat pesanan';
-        toast.error('Gagal membuat pesanan: ' + errorMessage);
+        toast.error('Gagal membuat pesanan: ' + (orderError.message || 'Terjadi kesalahan saat membuat pesanan'));
         setIsSubmitting(false);
         return;
       }
