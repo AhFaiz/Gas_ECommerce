@@ -17,7 +17,7 @@ const initialOrders = [
       { id: 1, name: 'Premium Household LPG Cylinder', quantity: 2, price: 45.99 }
     ],
     total: 91.98,
-    status: 'Delivered',
+    status: 'Delivered' as const,
     date: '2023-06-15T08:30:00',
     paymentMethod: 'Credit Card',
   },
@@ -33,7 +33,7 @@ const initialOrders = [
       { id: 2, name: 'Industrial Propane Gas Tank', quantity: 1, price: 129.99 }
     ],
     total: 129.99,
-    status: 'Processing',
+    status: 'Processing' as const,
     date: '2023-06-18T10:15:00',
     paymentMethod: 'Bank Transfer',
   },
@@ -50,7 +50,7 @@ const initialOrders = [
       { id: 9, name: 'Automatic Gas Leak Detector', quantity: 1, price: 59.95 }
     ],
     total: 119.8,
-    status: 'Shipped',
+    status: 'Shipped' as const,
     date: '2023-06-20T15:45:00',
     paymentMethod: 'Digital Wallet',
   },
@@ -66,7 +66,7 @@ const initialOrders = [
       { id: 4, name: 'Commercial Grade Natural Gas Regulator', quantity: 1, price: 78.50 }
     ],
     total: 78.5,
-    status: 'Pending',
+    status: 'Pending' as const,
     date: '2023-06-22T09:00:00',
     paymentMethod: 'Cash on Delivery',
   },
@@ -83,7 +83,7 @@ const initialOrders = [
       { id: 11, name: 'Digital Gas Pressure Regulator', quantity: 1, price: 89.99 }
     ],
     total: 279.94,
-    status: 'Delivered',
+    status: 'Delivered' as const,
     date: '2023-06-10T14:30:00',
     paymentMethod: 'Credit Card',
   },
