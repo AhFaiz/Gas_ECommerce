@@ -10,7 +10,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
   },
-  db: {
-    schema: 'public',
+  global: {
+    headers: {
+      'x-app-version': '1.0.0',
+    },
   },
 });
