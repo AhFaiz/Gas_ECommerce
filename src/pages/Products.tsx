@@ -26,17 +26,9 @@ const categories = [
   'Accessories'
 ];
 
-const sortOptions = [
-  { label: 'Price: Low to High', value: 'price-asc' },
-  { label: 'Price: High to Low', value: 'price-desc' },
-  { label: 'Name A-Z', value: 'name-asc' },
-  { label: 'Name Z-A', value: 'name-desc' }
-];
-
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('price-asc');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +62,7 @@ const Products = () => {
     fetchProducts();
   }, []);
   
-  // Apply filters and sorting
+  // Apply filters
   useEffect(() => {
     let result = [...products];
     let filterCount = 0;
@@ -90,32 +82,13 @@ const Products = () => {
       filterCount++;
     }
     
-    // Apply sorting
-    switch (sortBy) {
-      case 'price-asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'name-asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        result.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      default:
-        break;
-    }
-    
     setActiveFiltersCount(filterCount);
     setFilteredProducts(result);
-  }, [searchQuery, selectedCategory, sortBy, products]);
+  }, [searchQuery, selectedCategory, products]);
   
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('All');
-    setSortBy('price-asc');
   };
 
   return (
@@ -222,32 +195,15 @@ const Products = () => {
           
           {/* Products Grid */}
           <div className="flex-1">
-            {/* Sort Options */}
-            <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
-              <div>
-                <p className="text-foreground/70">
-                  {isLoading ? (
-                    'Loading products...'
-                  ) : (
-                    <>Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products</>
-                  )}
-                </p>
-              </div>
-              
-              <div className="flex items-center">
-                <label className="text-foreground/70 mr-2 text-sm">Sort by:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white border border-border rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Product count */}
+            <div className="mb-6">
+              <p className="text-foreground/70">
+                {isLoading ? (
+                  'Loading products...'
+                ) : (
+                  <>Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products</>
+                )}
+              </p>
             </div>
             
             {/* Products */}
