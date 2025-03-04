@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,8 +53,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      console.log('Creating new customer with ID:', customerId);
-      
       // Insert customer data first
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
@@ -76,22 +73,17 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         return;
       }
       
-      console.log('Customer created successfully, ID:', customerData.id);
-      console.log('Creating order with ID:', orderId);
-      
-      // Create order record
+      // Create order record with status capitalized to match database expectations
       const orderData = {
         id: orderId,
         customer_id: customerData.id,
         total: totalPrice,
         payment_method: 'cash',
-        status: 'pending',
+        status: 'Pending', // Capitalize status to match what the Orders page expects
         produk: product.name,
         jumlah: formData.quantity,
         tanggal: new Date().toISOString()
       };
-      
-      console.log('Order data to insert:', orderData);
       
       const { error: orderError } = await supabase
         .from('orders')
@@ -104,7 +96,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         return;
       }
 
-      console.log('Order completed successfully');
       setOrderSuccess(true);
       toast.success('Pesanan berhasil dibuat!');
       
