@@ -31,7 +31,7 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase auth event:', event, session);
 });
 
-// Enhanced debug functions for database operations
+// Enhanced debug functions for database operations with better error handling
 const originalFrom = supabase.from.bind(supabase);
 supabase.from = function debugFrom(table) {
   console.log(`Accessing table: ${table}`);
@@ -51,11 +51,25 @@ supabase.from = function debugFrom(table) {
             success: !result.error, 
             count: result.data?.length || 0,
             error: result.error,
-            data: result.data
+            status: result.status,
+            statusText: result.statusText
           });
+          
+          // Log more detailed data for debugging purposes
+          if (result.error) {
+            console.error(`Error details for '${table}' query:`, result.error);
+          } else if (!result.data || result.data.length === 0) {
+            console.warn(`No data returned for '${table}' query`);
+          } else {
+            console.log(`First item from '${table}' query:`, result.data[0]);
+          }
+          
           return onFulfilled(result);
         }, 
-        onRejected
+        (error) => {
+          console.error(`Unhandled error in '${table}' query:`, error);
+          return onRejected ? onRejected(error) : Promise.reject(error);
+        }
       );
     };
     

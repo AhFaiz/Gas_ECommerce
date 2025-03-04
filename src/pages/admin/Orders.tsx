@@ -1,14 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-// Update the Order interface to accept any string for status
-// Then use type assertion to convert it to the expected values
+// Update the Order interface to match exactly what's in the database
 interface Order {
   id: string;
   created_at: string;
-  status: string; // Changed from union type to string to match database response
+  status: string; // Using string to be more flexible with database values
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -41,11 +41,23 @@ const AdminOrders = () => {
     try {
       console.log('Fetching orders from Supabase...');
       
-      // Enhanced query with more detailed logging
+      // Explicitly log what we're about to do
+      console.log('About to execute query on orders table with join to products');
+      
+      // Make query more robust with explicit column selection
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          *,
+          id,
+          created_at,
+          status,
+          customer_name,
+          customer_email,
+          customer_phone,
+          customer_address,
+          product_id,
+          quantity,
+          total_price,
           product:products(id, name)
         `)
         .order('created_at', { ascending: false });
@@ -58,13 +70,14 @@ const AdminOrders = () => {
       }
 
       // Log the raw data received to help with debugging
-      console.log('Orders fetched successfully:', data);
+      console.log('Orders raw data:', data);
       
       if (!data || data.length === 0) {
         console.log('No orders found in the database');
         setOrders([]);
       } else {
         console.log(`Found ${data.length} orders in the database`);
+        console.log('Sample order data:', data[0]);
         setOrders(data);
       }
     } catch (error: any) {
@@ -78,6 +91,7 @@ const AdminOrders = () => {
   };
 
   useEffect(() => {
+    console.log('Orders component mounted, fetching orders...');
     fetchOrders();
   }, []);
 
@@ -221,6 +235,17 @@ const AdminOrders = () => {
           </button>
         </div>
       </div>
+
+      {/* Debug information */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+          <p className="font-semibold">Debug Info:</p>
+          <p>Total orders loaded: {orders.length}</p>
+          <p>Filtered orders: {filteredOrders.length}</p>
+          <p>Current filter: {statusFilter}</p>
+          <p>Search query: {searchQuery || '(empty)'}</p>
+        </div>
+      )}
 
       {/* Error message */}
       {fetchError && (
