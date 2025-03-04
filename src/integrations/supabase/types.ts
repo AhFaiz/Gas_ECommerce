@@ -77,7 +77,7 @@ export type Database = {
       }
       customers: {
         Row: {
-          address: string
+          alamat: string | null
           created_at: string | null
           email: string
           id: string
@@ -86,7 +86,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          address: string
+          alamat?: string | null
           created_at?: string | null
           email: string
           id?: string
@@ -95,7 +95,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          address?: string
+          alamat?: string | null
           created_at?: string | null
           email?: string
           id?: string
@@ -149,8 +149,11 @@ export type Database = {
           customer_id: string
           date: string | null
           id: string
+          jumlah: number | null
           payment_method: string
+          produk: string | null
           status: string
+          tanggal: string | null
           total: number
           updated_at: string | null
         }
@@ -159,8 +162,11 @@ export type Database = {
           customer_id: string
           date?: string | null
           id: string
+          jumlah?: number | null
           payment_method: string
+          produk?: string | null
           status: string
+          tanggal?: string | null
           total: number
           updated_at?: string | null
         }
@@ -169,8 +175,11 @@ export type Database = {
           customer_id?: string
           date?: string | null
           id?: string
+          jumlah?: number | null
           payment_method?: string
+          produk?: string | null
           status?: string
+          tanggal?: string | null
           total?: number
           updated_at?: string | null
         }

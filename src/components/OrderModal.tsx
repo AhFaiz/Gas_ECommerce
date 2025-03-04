@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { X, Package, User, Phone, MapPin, CreditCard, CheckCircle } from 'lucide-react';
+import { X, Package, User, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -22,17 +23,16 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    address: '',
+    alamat: '',
     email: '',
     quantity: 1,
-    payment_method: 'cash', // Default payment method
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -54,8 +54,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      console.log('Processing order with generated IDs:', { orderId, customerId });
-      
       // First, attempt to find if a customer with this email already exists
       const { data: existingCustomer, error: lookupError } = await supabase
         .from('customers')
@@ -74,7 +72,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       }
       
       if (existingCustomer) {
-        // Use existing customer and update their info
+        // Use existing customer
         finalCustomerId = existingCustomer.id;
         console.log('Found existing customer:', finalCustomerId);
         
@@ -83,7 +81,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
           .update({
             name: formData.name,
             phone: formData.phone,
-            address: formData.address
+            alamat: formData.alamat
           })
           .eq('id', finalCustomerId);
         
@@ -93,8 +91,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         }
       } else {
         // Create new customer
-        console.log('Creating new customer');
-        
         const { data: newCustomer, error: createError } = await supabase
           .from('customers')
           .insert({
@@ -102,7 +98,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
-            address: formData.address
+            alamat: formData.alamat
           })
           .select('id')
           .single();
@@ -115,41 +111,25 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         }
         
         finalCustomerId = newCustomer.id;
-        console.log('New customer created with ID:', finalCustomerId);
       }
       
-      // Create order record
-      console.log('Creating order with customer ID:', finalCustomerId);
+      // Create order record with new fields
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           customer_id: finalCustomerId,
           total: totalPrice,
-          payment_method: formData.payment_method,
-          status: 'pending'
+          payment_method: 'cash', // Default to cash
+          status: 'pending',
+          produk: product.name,
+          jumlah: formData.quantity,
+          tanggal: new Date().toISOString()
         });
 
       if (orderError) {
         console.error('Order creation error:', orderError);
         toast.error('Failed to create order: ' + orderError.message);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Create order item
-      const { error: orderItemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: orderId,
-          product_id: String(product.id),
-          quantity: formData.quantity,
-          price: product.price
-        });
-
-      if (orderItemError) {
-        console.error('Order item creation error:', orderItemError);
-        toast.error('Failed to create order items: ' + orderItemError.message);
         setIsSubmitting(false);
         return;
       }
@@ -165,10 +145,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         setFormData({
           name: '',
           phone: '',
-          address: '',
+          alamat: '',
           email: '',
           quantity: 1,
-          payment_method: 'cash',
         });
       }, 3000);
       
@@ -190,7 +169,11 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       >
         {orderSuccess ? (
           <div className="p-6 text-center">
-            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <h2 className="text-2xl font-bold mb-2">Pesanan Berhasil!</h2>
             <p className="mb-6 text-gray-600">Terima kasih telah melakukan pemesanan. Kami akan segera menghubungi Anda.</p>
           </div>
@@ -221,13 +204,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
                   </div>
                   <h3 className="font-medium text-base">{product.name}</h3>
                   <div className="mt-1 font-display font-semibold text-lg">
-                    ${product.price.toFixed(2)}
+                    Rp{product.price.toLocaleString('id-ID')}
                   </div>
                 </div>
               </div>
               
               <div className="mt-3 flex items-center justify-between">
-                <div className="text-sm font-medium">Quantity:</div>
+                <div className="text-sm font-medium">Jumlah:</div>
                 <div className="flex items-center border rounded">
                   <button
                     type="button" 
@@ -250,7 +233,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
               <div className="mt-3 flex items-center justify-between text-sm font-medium">
                 <span>Total:</span>
                 <span className="font-display font-semibold text-primary">
-                  ${(product.price * formData.quantity).toFixed(2)}
+                  Rp{(product.price * formData.quantity).toLocaleString('id-ID')}
                 </span>
               </div>
             </div>
@@ -319,39 +302,14 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
                     <MapPin size={16} className="text-gray-400" />
                   </div>
                   <textarea
-                    name="address"
-                    value={formData.address}
+                    name="alamat"
+                    value={formData.alamat}
                     onChange={handleInputChange}
                     required
                     rows={3}
                     className="pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-primary focus:border-primary"
                     placeholder="Masukkan alamat lengkap"
                   ></textarea>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Metode Pembayaran</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <CreditCard size={16} className="text-gray-400" />
-                  </div>
-                  <select
-                    name="payment_method"
-                    value={formData.payment_method}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-primary focus:border-primary appearance-none"
-                  >
-                    <option value="cash">Cash on Delivery</option>
-                    <option value="transfer">Bank Transfer</option>
-                    <option value="ewallet">E-Wallet</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                    </svg>
-                  </div>
                 </div>
               </div>
               
@@ -375,7 +333,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
                     </div>
                   ) : (
                     <div className="flex items-center justify-center">
-                      <Package size={18} className="mr-2" />
+                      <Send size={18} className="mr-2" />
                       <span>Kirim Pesanan</span>
                     </div>
                   )}
