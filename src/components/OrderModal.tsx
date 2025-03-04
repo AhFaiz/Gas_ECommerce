@@ -64,7 +64,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         product_id: product.id.toString(),
         quantity: formData.quantity,
         total_price: totalPrice,
-        status: 'Pending', // Status now has a default in the database
+        status: 'Pending', // Use 'Pending' as it's a valid status in the database
       };
       
       console.log('Creating order with data:', orderData);
