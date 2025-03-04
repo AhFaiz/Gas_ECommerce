@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,29 +55,43 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const totalPrice = Number(product.price) * formData.quantity;
       
       // Insert customer data first
-      const { data: customerData, error: customerError } = await supabase
+      const customerData = {
+        id: customerId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        alamat: formData.alamat
+      };
+      
+      console.log('Attempting to create customer:', customerData);
+      
+      const { data: createdCustomer, error: customerError } = await supabase
         .from('customers')
-        .insert({
-          id: customerId,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          alamat: formData.alamat
-        })
+        .insert(customerData)
         .select('id')
         .single();
       
       if (customerError) {
         console.error('Error creating customer:', customerError);
-        toast.error('Gagal membuat profil pelanggan: ' + customerError.message);
+        const errorMessage = customerError.message || 'Terjadi kesalahan saat membuat profil pelanggan';
+        toast.error('Gagal membuat profil pelanggan: ' + errorMessage);
         setIsSubmitting(false);
         return;
       }
       
+      if (!createdCustomer || !createdCustomer.id) {
+        console.error('Customer created but no ID returned');
+        toast.error('Gagal mendapatkan ID pelanggan');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      console.log('Customer created successfully:', createdCustomer);
+      
       // Create order record with status capitalized to match database expectations
       const orderData = {
         id: orderId,
-        customer_id: customerData.id,
+        customer_id: createdCustomer.id,
         total: totalPrice,
         payment_method: 'cash',
         status: 'Pending', // Capitalize status to match what the Orders page expects
@@ -85,17 +100,21 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         tanggal: new Date().toISOString()
       };
       
+      console.log('Creating order with data:', orderData);
+      
       const { error: orderError } = await supabase
         .from('orders')
         .insert(orderData);
 
       if (orderError) {
         console.error('Order creation error:', orderError);
-        toast.error('Gagal membuat pesanan: ' + orderError.message);
+        const errorMessage = orderError.message || 'Terjadi kesalahan saat membuat pesanan';
+        toast.error('Gagal membuat pesanan: ' + errorMessage);
         setIsSubmitting(false);
         return;
       }
 
+      console.log('Order completed successfully with ID:', orderId);
       setOrderSuccess(true);
       toast.success('Pesanan berhasil dibuat!');
       

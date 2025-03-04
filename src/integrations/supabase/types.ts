@@ -75,120 +75,49 @@ export type Database = {
         }
         Relationships: []
       }
-      customers: {
-        Row: {
-          alamat: string | null
-          created_at: string | null
-          email: string
-          id: string
-          name: string
-          phone: string
-          updated_at: string | null
-        }
-        Insert: {
-          alamat?: string | null
-          created_at?: string | null
-          email: string
-          id?: string
-          name: string
-          phone: string
-          updated_at?: string | null
-        }
-        Update: {
-          alamat?: string | null
-          created_at?: string | null
-          email?: string
-          id?: string
-          name?: string
-          phone?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      order_items: {
-        Row: {
-          created_at: string | null
-          id: string
-          order_id: string
-          price: number
-          product_id: string
-          quantity: number
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          order_id: string
-          price: number
-          product_id: string
-          quantity: number
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          order_id?: string
-          price?: number
-          product_id?: string
-          quantity?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       orders: {
         Row: {
           created_at: string | null
-          customer_id: string
-          date: string | null
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
           id: string
-          jumlah: number | null
-          payment_method: string
-          produk: string | null
-          status: string
-          tanggal: string | null
-          total: number
-          updated_at: string | null
+          product_id: string | null
+          quantity: number
+          status: string | null
+          total_price: number
         }
         Insert: {
           created_at?: string | null
-          customer_id: string
-          date?: string | null
-          id: string
-          jumlah?: number | null
-          payment_method: string
-          produk?: string | null
-          status: string
-          tanggal?: string | null
-          total: number
-          updated_at?: string | null
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id?: string
+          product_id?: string | null
+          quantity: number
+          status?: string | null
+          total_price: number
         }
         Update: {
           created_at?: string | null
-          customer_id?: string
-          date?: string | null
+          customer_address?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
           id?: string
-          jumlah?: number | null
-          payment_method?: string
-          produk?: string | null
-          status?: string
-          tanggal?: string | null
-          total?: number
-          updated_at?: string | null
+          product_id?: string | null
+          quantity?: number
+          status?: string | null
+          total_price?: number
         }
         Relationships: [
           {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
