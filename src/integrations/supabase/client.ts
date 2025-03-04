@@ -27,14 +27,14 @@ supabase.auth.onAuthStateChange((event, session) => {
 });
 
 // Directly expose raw fetch method for testing
-export const rawFetch = async (url: string, options = {}) => {
+export const rawFetch = async (url: string, options: RequestInit = {}) => {
   const fullUrl = `${SUPABASE_URL}${url.startsWith('/') ? url : '/' + url}`;
   console.log(`Direct fetch to: ${fullUrl}`);
   try {
     const response = await fetch(fullUrl, {
       ...options,
       headers: {
-        ...options.headers,
+        ...(options.headers || {}),
         'apikey': SUPABASE_PUBLISHABLE_KEY,
         'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
       },
