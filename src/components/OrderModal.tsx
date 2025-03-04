@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,70 +50,129 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // Generate unique order ID and customer ID
+      // Generate unique order ID
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      console.log('Creating order with generated IDs:', { orderId, customerId });
+      console.log('Processing order with IDs:', { orderId, customerId });
       
-      // First, check if customer with this email already exists
-      const { data: existingCustomers, error: lookupError } = await supabase
+      // First create the customer - we'll create a new customer instead of trying to find an existing one
+      // This avoids the RLS policy check on the admin table
+      const { data: customerData, error: customerError } = await supabase
         .from('customers')
+        .insert({
+          id: customerId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address
+        })
         .select('id')
-        .eq('email', formData.email)
-        .limit(1);
+        .single();
       
-      let finalCustomerId: string;
-      
-      if (lookupError) {
-        console.error('Error finding existing customer:', lookupError.message);
-        // Continue with new customer creation as fallback
-        finalCustomerId = customerId;
-      } else if (existingCustomers && existingCustomers.length > 0) {
-        // Customer exists, use existing ID and update their info
-        finalCustomerId = existingCustomers[0].id;
-        console.log('Found existing customer with ID:', finalCustomerId);
+      if (customerError) {
+        console.error('Customer creation error:', customerError.message);
         
-        // Update the existing customer data
-        const { error: updateError } = await supabase
-          .from('customers')
-          .update({
-            name: formData.name,
-            phone: formData.phone,
-            address: formData.address
-          })
-          .eq('id', finalCustomerId);
-        
-        if (updateError) {
-          console.error('Error updating customer data:', updateError.message);
-          // Continue with order creation anyway
-        }
-      } else {
-        // No existing customer, create new one
-        finalCustomerId = customerId;
-        console.log('Creating new customer with ID:', finalCustomerId);
-        
-        const { error: createError } = await supabase
-          .from('customers')
-          .insert({
-            id: finalCustomerId,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address
-          });
-        
-        if (createError) {
-          console.error('Error creating new customer:', createError.message);
-          toast.error('Failed to create customer: ' + createError.message);
+        // If customer already exists with this email, try to find their ID
+        if (customerError.code === '23505') { // Duplicate key violation
+          console.log('Customer may already exist, trying to find by email');
+          
+          const { data: existingCustomer, error: lookupError } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('email', formData.email)
+            .single();
+          
+          if (lookupError || !existingCustomer) {
+            console.error('Error finding existing customer:', lookupError?.message);
+            toast.error('Failed to process order: ' + (lookupError?.message || 'Customer lookup error'));
+            setIsSubmitting(false);
+            return;
+          }
+          
+          console.log('Found existing customer:', existingCustomer);
+          // Use the existing customer ID
+          await supabase
+            .from('customers')
+            .update({
+              name: formData.name,
+              phone: formData.phone,
+              address: formData.address
+            })
+            .eq('id', existingCustomer.id);
+            
+          // Continue with order creation using existing customer ID
+          const finalCustomerId = existingCustomer.id;
+          
+          // Create order with the found customer ID
+          const { error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              id: orderId,
+              customer_id: finalCustomerId,
+              total: totalPrice,
+              payment_method: formData.payment_method,
+              status: 'pending'
+            });
+
+          if (orderError) {
+            console.error('Order creation error with existing customer:', orderError);
+            toast.error('Failed to create order: ' + orderError.message);
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Create order item
+          const { error: orderItemError } = await supabase
+            .from('order_items')
+            .insert({
+              order_id: orderId,
+              product_id: String(product.id),
+              quantity: formData.quantity,
+              price: product.price
+            });
+
+          if (orderItemError) {
+            console.error('Order item creation error:', orderItemError);
+            toast.error('Failed to create order items: ' + orderItemError.message);
+            setIsSubmitting(false);
+            return;
+          }
+          
+          // If we made it here, the order was successful
+          console.log('Order completed successfully with existing customer');
+          setOrderSuccess(true);
+          toast.success('Pesanan berhasil dibuat!');
+          
+          // Reset form after 3 seconds
+          setTimeout(() => {
+            setOrderSuccess(false);
+            onClose();
+            setFormData({
+              name: '',
+              phone: '',
+              address: '',
+              email: '',
+              quantity: 1,
+              payment_method: 'cash',
+            });
+          }, 3000);
+          
+          return;
+        } else {
+          // Different error, show to user
+          toast.error('Failed to create customer: ' + customerError.message);
           setIsSubmitting(false);
           return;
         }
       }
       
-      // Create order record with the customer ID
-      console.log('Creating order with customer ID:', finalCustomerId);
+      // We have a new customer ID
+      const finalCustomerId = customerData?.id || customerId;
+      
+      // Create order record
+      console.log('Creating order with new customer ID:', finalCustomerId);
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -124,37 +184,34 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         });
 
       if (orderError) {
-        console.error('Error creating order:', orderError.message);
-        toast.error('Failed to process order: ' + orderError.message);
+        console.error('Order creation error:', orderError);
+        toast.error('Failed to create order: ' + orderError.message);
         setIsSubmitting(false);
         return;
       }
 
       // Create order item
-      console.log('Creating order item...');
-      const productIdString = String(product.id); // Convert to string to fix type issue
-      
       const { error: orderItemError } = await supabase
         .from('order_items')
         .insert({
           order_id: orderId,
-          product_id: productIdString,
+          product_id: String(product.id),
           quantity: formData.quantity,
           price: product.price
         });
 
       if (orderItemError) {
-        console.error('Error creating order item:', orderItemError.message);
-        toast.error('Failed to complete order: ' + orderItemError.message);
+        console.error('Order item creation error:', orderItemError);
+        toast.error('Failed to create order items: ' + orderItemError.message);
         setIsSubmitting(false);
         return;
       }
 
-      console.log('Order created successfully!');
+      console.log('Order completed successfully with new customer');
       setOrderSuccess(true);
       toast.success('Pesanan berhasil dibuat!');
       
-      // Reset form after 3 seconds of showing success message
+      // Reset form after 3 seconds
       setTimeout(() => {
         setOrderSuccess(false);
         onClose();
