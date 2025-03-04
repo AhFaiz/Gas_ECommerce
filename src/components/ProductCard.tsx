@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 
 interface ProductCardProps {
-  id: number;
+  id: string | number;  // Updated to accept either string or number
   name: string;
   price: number;
   image: string;
