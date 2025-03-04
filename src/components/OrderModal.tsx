@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Package, User, Phone, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,16 +49,20 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // 1. Create or get customer
-      console.log('Creating/getting customer...');
+      // 1. Create a unique order ID 
+      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const totalPrice = Number(product.price) * formData.quantity;
+      
+      // 2. Insert customer data directly without upsert which is causing the error
+      console.log('Creating customer...');
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
-        .upsert({
+        .insert({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           address: formData.address
-        }, { onConflict: 'email' })
+        })
         .select('id')
         .single();
 
@@ -71,13 +74,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       }
 
       const customerId = customerData.id;
-
-      // 2. Create a unique order ID 
-      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
       // 3. Create order
       console.log('Creating order...');
-      const totalPrice = Number(product.price) * formData.quantity;
       
       const { error: orderError } = await supabase
         .from('orders')
