@@ -98,20 +98,20 @@ const Contact = () => {
                 <div className="space-y-6">
                   {[
                     {
-                      question: 'How do I place an order for gas delivery?',
-                      answer: 'You can place an order through our website, mobile app, or by calling our customer service number. We'll arrange delivery based on your location and availability.'
+                      question: "How do I place an order for gas delivery?",
+                      answer: "You can place an order through our website, mobile app, or by calling our customer service number. We'll arrange delivery based on your location and availability."
                     },
                     {
-                      question: 'What payment methods do you accept?',
-                      answer: 'We accept cash, credit/debit cards, bank transfers, and digital payment methods like GoPay and OVO.'
+                      question: "What payment methods do you accept?",
+                      answer: "We accept cash, credit/debit cards, bank transfers, and digital payment methods like GoPay and OVO."
                     },
                     {
-                      question: 'How quickly can I get gas delivered?',
-                      answer: 'For standard deliveries, we typically deliver within 24-48 hours. For emergency situations, we offer expedited delivery services.'
+                      question: "How quickly can I get gas delivered?",
+                      answer: "For standard deliveries, we typically deliver within 24-48 hours. For emergency situations, we offer expedited delivery services."
                     },
                     {
-                      question: 'Do you offer bulk discounts for businesses?',
-                      answer: 'Yes, we provide special pricing for commercial and industrial customers based on volume and frequency of orders. Contact our sales team for details.'
+                      question: "Do you offer bulk discounts for businesses?",
+                      answer: "Yes, we provide special pricing for commercial and industrial customers based on volume and frequency of orders. Contact our sales team for details."
                     }
                   ].map((faq, index) => (
                     <div key={index}>
