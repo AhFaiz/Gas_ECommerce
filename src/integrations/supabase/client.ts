@@ -25,3 +25,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
   },
 });
+
+// Add debug logging for easier development troubleshooting
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Supabase auth event:', event, session);
+});

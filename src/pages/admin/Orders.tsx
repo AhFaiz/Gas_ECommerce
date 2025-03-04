@@ -4,24 +4,21 @@ import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  alamat: string;
-}
-
 interface Order {
   id: string;
-  customer_id: string;
-  total: number;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  tanggal: string;
-  payment_method: string;
-  produk: string;
-  jumlah: number;
-  customer?: Customer;
+  created_at: string;
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'New';
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  product_id: string;
+  quantity: number;
+  total_price: number;
+  product?: {
+    name: string;
+    id: string;
+  };
 }
 
 const AdminOrders = () => {
@@ -35,27 +32,24 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
+      console.log('Fetching orders from Supabase...');
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
-          customer:customers(*)
+          product:products(id, name)
         `)
-        .order('tanggal', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching orders:', error);
         throw error;
       }
 
-      // Transform the data to match our Order interface
-      const transformedOrders: Order[] = data.map((order: any) => ({
-        ...order,
-        customer: order.customer
-      }));
-
-      setOrders(transformedOrders);
+      console.log('Orders fetched successfully:', data);
+      setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Failed to load orders:', error);
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
@@ -70,8 +64,8 @@ const AdminOrders = () => {
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (order.customer?.email?.toLowerCase().includes(searchQuery.toLowerCase()) || '');
+      order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer_email.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     
@@ -121,6 +115,7 @@ const AdminOrders = () => {
       case 'Shipped': return 'bg-purple-100 text-purple-800';
       case 'Delivered': return 'bg-green-100 text-green-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
+      case 'New': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -182,6 +177,7 @@ const AdminOrders = () => {
               <option value="Shipped">Dikirim</option>
               <option value="Delivered">Selesai</option>
               <option value="Cancelled">Dibatalkan</option>
+              <option value="New">New</option>
             </select>
           </div>
 
@@ -252,20 +248,20 @@ const AdminOrders = () => {
                       {order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{order.customer?.name || '-'}</div>
-                      <div className="text-sm text-gray-500">{order.customer?.email || '-'}</div>
+                      <div className="text-sm font-medium text-gray-900">{order.customer_name || '-'}</div>
+                      <div className="text-sm text-gray-500">{order.customer_email || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.produk || '-'}
+                      {order.product?.name || 'Produk tidak ditemukan'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.jumlah || '-'}
+                      {order.quantity || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(order.tanggal)}
+                      {formatDate(order.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Rp{order.total?.toLocaleString('id-ID') || '-'}
+                      Rp{order.total_price?.toLocaleString('id-ID') || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span 
@@ -322,20 +318,19 @@ const AdminOrders = () => {
                 <div className="grid grid-cols-1 gap-6 mb-6">
                   <div className="bg-gray-50 p-4 rounded-md">
                     <h4 className="font-medium text-gray-700 mb-2">Informasi Pelanggan</h4>
-                    <p className="text-sm mb-1"><span className="font-medium">Nama:</span> {selectedOrder.customer?.name || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Email:</span> {selectedOrder.customer?.email || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Telepon:</span> {selectedOrder.customer?.phone || '-'}</p>
-                    <p className="text-sm"><span className="font-medium">Alamat:</span> {selectedOrder.customer?.alamat || '-'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Nama:</span> {selectedOrder.customer_name || '-'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Email:</span> {selectedOrder.customer_email || '-'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Telepon:</span> {selectedOrder.customer_phone || '-'}</p>
+                    <p className="text-sm"><span className="font-medium">Alamat:</span> {selectedOrder.customer_address || '-'}</p>
                   </div>
                   
                   <div className="bg-gray-50 p-4 rounded-md">
                     <h4 className="font-medium text-gray-700 mb-2">Informasi Pesanan</h4>
                     <p className="text-sm mb-1"><span className="font-medium">ID Pesanan:</span> {selectedOrder.id}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Tanggal:</span> {formatDate(selectedOrder.tanggal)}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Produk:</span> {selectedOrder.produk || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Jumlah:</span> {selectedOrder.jumlah || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Total:</span> Rp{selectedOrder.total?.toLocaleString('id-ID') || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Metode Pembayaran:</span> {selectedOrder.payment_method || '-'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Tanggal:</span> {formatDate(selectedOrder.created_at)}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Produk:</span> {selectedOrder.product?.name || 'Produk tidak ditemukan'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Jumlah:</span> {selectedOrder.quantity || '-'}</p>
+                    <p className="text-sm mb-1"><span className="font-medium">Total:</span> Rp{selectedOrder.total_price?.toLocaleString('id-ID') || '-'}</p>
                     <p className="text-sm">
                       <span className="font-medium">Status:</span> 
                       <span 
@@ -350,7 +345,7 @@ const AdminOrders = () => {
                 <div className="bg-gray-50 p-4 rounded-md mb-6">
                   <h4 className="font-medium text-gray-700 mb-2">Perbarui Status Pesanan</h4>
                   <div className="flex flex-wrap gap-2">
-                    {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((status) => (
+                    {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'New'].map((status) => (
                       <button
                         key={status}
                         onClick={() => handleUpdateStatus(selectedOrder.id, status as Order['status'])}
