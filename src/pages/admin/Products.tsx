@@ -20,6 +20,8 @@ const AdminProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Product form state
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
@@ -35,19 +37,28 @@ const AdminProducts = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('products')
-        .select('*');
+        .select('id, name, price, image, category, stock, is_new');
         
       if (error) {
         console.error('Error fetching products:', error);
+        setError('Failed to load products. Please try again.');
         toast.error('Failed to load products');
         return;
       }
         
-      setProducts(data as Product[]);
+      if (data && Array.isArray(data)) {
+        setProducts(data as Product[]);
+      } else {
+        setProducts([]);
+        setError('No products found');
+      }
     } catch (error) {
       console.error('Exception fetching products:', error);
+      setError('An unexpected error occurred');
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -75,6 +86,7 @@ const AdminProducts = () => {
   }, []);
 
   const handleOpenModal = (product: Product | null = null) => {
+    setError(null);
     if (product) {
       setCurrentProduct(product);
       setFormData({
@@ -102,6 +114,7 @@ const AdminProducts = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCurrentProduct(null);
+    setError(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -119,6 +132,8 @@ const AdminProducts = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
     
     try {
       if (currentProduct) {
@@ -131,45 +146,54 @@ const AdminProducts = () => {
             image: formData.image,
             category: formData.category,
             stock: formData.stock,
-            is_new: formData.is_new,
-            updated_at: new Date().toISOString()
+            is_new: formData.is_new
           })
           .eq('id', currentProduct.id);
           
         if (error) {
           console.error('Error updating product:', error);
+          setError('Failed to update product: ' + error.message);
           toast.error('Failed to update product');
           return;
         }
         
         toast.success('Product updated successfully!');
+        handleCloseModal();
+        fetchProducts();
       } else {
         // Create new product
-        const { error } = await supabase
+        console.log('Creating product with data:', formData);
+        
+        const { data, error } = await supabase
           .from('products')
-          .insert({
+          .insert([{
             name: formData.name,
             price: formData.price,
             image: formData.image,
             category: formData.category,
             stock: formData.stock,
             is_new: formData.is_new
-          });
+          }])
+          .select();
           
         if (error) {
           console.error('Error creating product:', error);
+          setError('Failed to create product: ' + error.message);
           toast.error('Failed to create product');
           return;
         }
         
+        console.log('Product created:', data);
         toast.success('Product added successfully!');
+        handleCloseModal();
+        fetchProducts();
       }
-      
-      fetchProducts();
-      handleCloseModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception handling product:', error);
+      setError('An unexpected error occurred: ' + error.message);
       toast.error('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -206,6 +230,7 @@ const AdminProducts = () => {
 
   return (
     <div className="space-y-8">
+      {/* Header section */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-800">Product Management</h1>
@@ -246,6 +271,7 @@ const AdminProducts = () => {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
+            {/* Table header */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -268,11 +294,27 @@ const AdminProducts = () => {
                 </th>
               </tr>
             </thead>
+            {/* Table body */}
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-4 text-center">
                     <p className="text-gray-500">Loading products...</p>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+                      <X className="h-5 w-5 text-red-600" />
+                    </div>
+                    <p className="text-gray-700 mb-2">{error}</p>
+                    <button
+                      onClick={fetchProducts}
+                      className="text-primary hover:underline"
+                    >
+                      Try Again
+                    </button>
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
@@ -290,7 +332,10 @@ const AdminProducts = () => {
                           <img 
                             className="h-10 w-10 rounded-md object-cover" 
                             src={product.image} 
-                            alt={product.name} 
+                            alt={product.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/placeholder.svg";
+                            }}
                           />
                         </div>
                         <div className="ml-4">
@@ -374,6 +419,12 @@ const AdminProducts = () => {
               
               <form onSubmit={handleSubmit}>
                 <div className="px-6 py-4">
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                      <p className="text-sm">{error}</p>
+                    </div>
+                  )}
+                  
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -478,15 +529,27 @@ const AdminProducts = () => {
                   <button
                     type="button"
                     onClick={handleCloseModal}
+                    disabled={isSubmitting}
                     className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary mr-3"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
-                    {currentProduct ? 'Update Product' : 'Add Product'}
+                    {isSubmitting ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      <>{currentProduct ? 'Update Product' : 'Add Product'}</>
+                    )}
                   </button>
                 </div>
               </form>

@@ -43,7 +43,8 @@ const Products = () => {
         setIsLoading(true);
         setError(null);
         
-        // Simplified query to avoid potential policy issues
+        // Use .select() without any joins to avoid potential RLS issues
+        console.log('Fetching products from Supabase...');
         const { data, error } = await supabase
           .from('products')
           .select('id, name, price, image, category, stock, is_new');
@@ -56,6 +57,7 @@ const Products = () => {
           return;
         }
         
+        console.log('Products fetched successfully:', data);
         // Make sure we have data before setting it
         if (data && Array.isArray(data)) {
           setProducts(data as Product[]);
