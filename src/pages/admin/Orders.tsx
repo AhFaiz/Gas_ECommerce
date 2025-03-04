@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,7 +13,7 @@ interface Order {
   customer_email: string;
   customer_phone: string;
   customer_address: string;
-  product_id: string;
+  product_id: string | null;
   quantity: number;
   total_price: number;
   product?: {
@@ -33,11 +32,16 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
+    setFetchError(null);
+    
     try {
       console.log('Fetching orders from Supabase...');
+      
+      // Enhanced query with more detailed logging
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -48,6 +52,7 @@ const AdminOrders = () => {
 
       if (error) {
         console.error('Error fetching orders:', error);
+        setFetchError(error.message);
         toast.error(`Failed to load orders: ${error.message}`);
         throw error;
       }
@@ -57,12 +62,16 @@ const AdminOrders = () => {
       
       if (!data || data.length === 0) {
         console.log('No orders found in the database');
+        setOrders([]);
+      } else {
+        console.log(`Found ${data.length} orders in the database`);
+        setOrders(data);
       }
-      
-      setOrders(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load orders:', error);
+      setFetchError(error?.message || 'Unknown error');
       toast.error('Failed to load orders');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -122,7 +131,7 @@ const AdminOrders = () => {
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating order status:', error);
       toast.error('Gagal memperbarui status pesanan');
     }
@@ -213,6 +222,14 @@ const AdminOrders = () => {
         </div>
       </div>
 
+      {/* Error message */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm">
+          <p className="font-semibold">Error saat memuat data pesanan:</p>
+          <p>{fetchError}</p>
+        </div>
+      )}
+
       {/* Orders Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -246,7 +263,6 @@ const AdminOrders = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* ... keep existing code (loading state and empty state handling) */}
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center">
@@ -259,7 +275,7 @@ const AdminOrders = () => {
               ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    Tidak ada pesanan yang ditemukan
+                    {fetchError ? 'Error loading orders' : 'Tidak ada pesanan yang ditemukan'}
                   </td>
                 </tr>
               ) : (

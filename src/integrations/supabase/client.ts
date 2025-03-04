@@ -31,9 +31,36 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase auth event:', event, session);
 });
 
-// Add additional debugging for database operations
+// Enhanced debug functions for database operations
 const originalFrom = supabase.from.bind(supabase);
 supabase.from = function debugFrom(table) {
   console.log(`Accessing table: ${table}`);
-  return originalFrom(table);
+  
+  const originalSelect = originalFrom(table).select;
+  const wrappedFrom = originalFrom(table);
+  
+  wrappedFrom.select = function debugSelect(...args) {
+    console.log(`Executing SELECT query on table '${table}' with arguments:`, args);
+    const query = originalSelect.apply(this, args);
+    
+    const originalThen = query.then;
+    query.then = function debugThen(onFulfilled, onRejected) {
+      return originalThen.call(this, 
+        (result) => {
+          console.log(`Query result for '${table}':`, { 
+            success: !result.error, 
+            count: result.data?.length || 0,
+            error: result.error,
+            data: result.data
+          });
+          return onFulfilled(result);
+        }, 
+        onRejected
+      );
+    };
+    
+    return query;
+  };
+  
+  return wrappedFrom;
 };
