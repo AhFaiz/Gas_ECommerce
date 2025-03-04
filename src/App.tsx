@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Index from "./pages/Index";
@@ -30,14 +30,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Client Routes with Layout */}
-          <Route path="/" element={<><Navbar /><Footer /></>}>
+          <Route path="/" element={<div><Navbar /><Outlet /><Footer /></div>}>
             <Route index element={<Index />} />
+            <Route path="products" element={<Products />} />
+            <Route path="about" element={<About />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
-          
-          <Route path="/products" element={<><Navbar /><Products /><Footer /></>} />
-          <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
-          <Route path="/contact" element={<><Navbar /><Contact /><Footer /></>} />
-          <Route path="*" element={<><Navbar /><NotFound /><Footer /></>} />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
