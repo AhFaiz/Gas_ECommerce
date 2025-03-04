@@ -96,13 +96,15 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         return;
       }
 
-      // 4. Create order item
+      // 4. Create order item - Convert product_id to string to ensure type compatibility
       console.log('Creating order item...');
+      const productIdString = String(product.id); // Convert to string to fix type issue
+      
       const { error: orderItemError } = await supabase
         .from('order_items')
         .insert({
           order_id: orderId,
-          product_id: product.id,
+          product_id: productIdString,
           quantity: formData.quantity,
           price: product.price
         });
