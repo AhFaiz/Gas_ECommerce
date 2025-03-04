@@ -1,8 +1,14 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Lock, LogIn } from 'lucide-react';
+
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({
@@ -11,6 +17,8 @@ const AdminLogin = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as LocationState)?.from?.pathname || '/admin/dashboard';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -21,15 +29,16 @@ const AdminLogin = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simple authentication (in a production app, this would be a secure API call)
+    // Simple authentication for admin account
     setTimeout(() => {
-      // Updated credentials to admin123/admin123
+      // Check for admin credentials: username: admin123, password: admin123
       if (credentials.username === 'admin123' && credentials.password === 'admin123') {
         localStorage.setItem('adminAuthenticated', 'true');
+        localStorage.setItem('adminUsername', credentials.username);
         toast.success('Login successful!');
-        navigate('/admin/dashboard');
+        navigate(from);
       } else {
-        toast.error('Invalid credentials. Please try again.');
+        toast.error('Invalid admin credentials. Only admin accounts are allowed.');
       }
       setIsSubmitting(false);
     }, 1000);
@@ -44,7 +53,7 @@ const AdminLogin = () => {
           </div>
           <h2 className="mt-2 text-3xl font-display font-bold text-gray-900">Admin Login</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your credentials to access the admin dashboard
+            Enter your admin credentials to access the dashboard
           </p>
         </div>
         
@@ -52,7 +61,7 @@ const AdminLogin = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+                Admin Username
               </label>
               <input
                 id="username"
@@ -63,7 +72,7 @@ const AdminLogin = () => {
                 value={credentials.username}
                 onChange={handleChange}
                 className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-primary/30 focus:ring-2 focus:border-primary outline-none transition-all"
-                placeholder="Enter your username"
+                placeholder="Enter admin username"
               />
             </div>
             
@@ -80,7 +89,7 @@ const AdminLogin = () => {
                 value={credentials.password}
                 onChange={handleChange}
                 className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-primary/30 focus:ring-2 focus:border-primary outline-none transition-all"
-                placeholder="Enter your password"
+                placeholder="Enter admin password"
               />
             </div>
           </div>
@@ -97,7 +106,7 @@ const AdminLogin = () => {
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Sign in
+                  Sign in as Admin
                 </>
               )}
             </button>

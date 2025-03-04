@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -16,15 +16,9 @@ const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
-    if (!isAuthenticated) {
-      navigate('/admin/login');
-    }
-  }, [navigate]);
-
   const handleLogout = () => {
     localStorage.removeItem('adminAuthenticated');
+    localStorage.removeItem('adminUsername');
     toast.success('You have been logged out');
     navigate('/admin/login');
   };
