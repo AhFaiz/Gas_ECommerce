@@ -34,27 +34,40 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   
   // Fetch products from Supabase
   useEffect(() => {
     async function fetchProducts() {
       try {
         setIsLoading(true);
+        setError(null);
+        
+        // Simplified query to avoid potential policy issues
         const { data, error } = await supabase
           .from('products')
           .select('id, name, price, image, category, stock, is_new');
         
         if (error) {
           console.error('Error fetching products:', error);
+          setError('Failed to load products. Please try again later.');
           toast.error('Failed to load products');
+          setIsLoading(false);
           return;
         }
         
-        setProducts(data as Product[]);
-        setIsLoading(false);
+        // Make sure we have data before setting it
+        if (data && Array.isArray(data)) {
+          setProducts(data as Product[]);
+        } else {
+          setProducts([]);
+          setError('No products found.');
+        }
       } catch (error) {
         console.error('Exception fetching products:', error);
+        setError('An unexpected error occurred. Please try again later.');
         toast.error('An unexpected error occurred');
+      } finally {
         setIsLoading(false);
       }
     }
@@ -220,6 +233,20 @@ const Products = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : error ? (
+              // Error message
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+                  <X className="h-6 w-6 text-red-600" />
+                </div>
+                <p className="text-foreground/80 text-lg mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Try Again
+                </button>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
