@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
+import { Search, X, Filter, Eye, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, rawFetch } from '@/integrations/supabase/client';
 
 // Update the Order interface to match exactly what's in the database
 interface Order {
@@ -33,10 +32,61 @@ const AdminOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchAttempts, setFetchAttempts] = useState(0);
+  const [debugMode, setDebugMode] = useState(true);
+
+  // Function to check if there's any data in the orders table using direct REST API
+  const checkDirectRestApi = async () => {
+    try {
+      console.log('Checking orders table directly through REST API...');
+      const rawData = await rawFetch('/rest/v1/orders?select=*&limit=100');
+      
+      console.log('Direct REST API results:', {
+        isArray: Array.isArray(rawData),
+        count: Array.isArray(rawData) ? rawData.length : 'Not an array',
+        sample: Array.isArray(rawData) && rawData.length > 0 ? rawData[0] : 'No data'
+      });
+      
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        // If we got data directly, use it
+        console.log('Successfully retrieved orders via direct REST API!');
+        const ordersWithProducts = await Promise.all(
+          rawData.map(async (order) => {
+            if (!order.product_id) {
+              return { ...order, product: null };
+            }
+            
+            try {
+              const productData = await rawFetch(`/rest/v1/products?id=eq.${order.product_id}&select=id,name`);
+              return { 
+                ...order, 
+                product: Array.isArray(productData) && productData.length > 0 ? productData[0] : null 
+              };
+            } catch (err) {
+              console.error('Error fetching product for order:', err);
+              return { ...order, product: null };
+            }
+          })
+        );
+        
+        setOrders(ordersWithProducts);
+        setFetchError(null);
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error('Error in direct REST API check:', err);
+      return false;
+    }
+  };
 
   // Function to check if there's any data in the orders table
   const checkOrdersTableData = async () => {
     try {
+      console.log('Checking orders table data...');
+      
+      // First try a basic count
       const { count, error } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true });
@@ -45,18 +95,35 @@ const AdminOrders = () => {
       
       if (error) {
         console.error('Error checking orders count:', error);
+        return false;
       } else if (count === 0) {
         console.warn('Orders table is empty. No records exist in the database.');
+        return false;
       }
+      
+      // If count is positive, attempt to get first few records
+      const { data: sampleData, error: sampleError } = await supabase
+        .from('orders')
+        .select('id, customer_name, status')
+        .limit(3);
+        
+      if (sampleError) {
+        console.error('Error fetching sample orders:', sampleError);
+        return false;
+      }
+      
+      console.log('Sample orders data:', sampleData);
+      return count > 0;
     } catch (err) {
       console.error('Failed to check orders count:', err);
+      return false;
     }
   };
 
-  // Alternative fetch function with a different query approach
-  const fetchOrdersAlternative = async () => {
+  // Alternative fetch function with a simplified approach
+  const fetchOrdersSimple = async () => {
     try {
-      console.log('Trying alternative fetch approach...');
+      console.log('Trying simplified fetch approach...');
       
       // First, fetch all orders
       const { data: ordersData, error: ordersError } = await supabase
@@ -64,15 +131,15 @@ const AdminOrders = () => {
         .select('*');
 
       if (ordersError) {
-        console.error('Alternative fetch - Error fetching orders:', ordersError);
-        return;
+        console.error('Simple fetch - Error fetching orders:', ordersError);
+        return false;
       }
 
-      console.log('Alternative fetch - Orders data:', ordersData);
+      console.log('Simple fetch - Orders data:', ordersData);
       
       if (!ordersData || ordersData.length === 0) {
-        console.warn('Alternative fetch - No orders found');
-        return;
+        console.warn('Simple fetch - No orders found');
+        return false;
       }
 
       // Then, for each order, fetch the associated product
@@ -92,29 +159,95 @@ const AdminOrders = () => {
         })
       );
 
-      console.log('Alternative fetch - Orders with products:', ordersWithProducts);
+      console.log('Simple fetch - Orders with products:', ordersWithProducts);
       
       if (ordersWithProducts.length > 0) {
         setOrders(ordersWithProducts);
         setFetchError(null);
+        return true;
       }
+      
+      return false;
     } catch (err) {
-      console.error('Error in alternative fetch approach:', err);
+      console.error('Error in simple fetch approach:', err);
+      return false;
+    }
+  };
+
+  // Manual insertion of test order if requested
+  const insertTestOrder = async () => {
+    try {
+      console.log('Inserting a test order...');
+      
+      // First get a valid product_id
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .limit(1);
+        
+      if (!products || products.length === 0) {
+        toast.error('No products found for test order');
+        return;
+      }
+      
+      const product = products[0];
+      console.log('Using product for test order:', product);
+      
+      const testOrder = {
+        customer_name: `Test Customer ${Math.floor(Math.random() * 1000)}`,
+        customer_email: `test${Math.floor(Math.random() * 1000)}@example.com`,
+        customer_phone: `123${Math.floor(Math.random() * 10000000)}`,
+        customer_address: `Test Address ${Math.floor(Math.random() * 1000)}`,
+        product_id: product.id,
+        quantity: 1,
+        total_price: product.price || 99.99,
+        status: 'Pending'
+      };
+      
+      console.log('Creating test order with data:', testOrder);
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .insert(testOrder)
+        .select();
+        
+      if (error) {
+        console.error('Error creating test order:', error);
+        toast.error('Failed to create test order: ' + error.message);
+      } else {
+        console.log('Test order created:', data);
+        toast.success('Test order created successfully');
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error('Exception in createTestOrder:', error);
+      toast.error('Failed to create test order');
     }
   };
 
   const fetchOrders = async () => {
     setLoading(true);
     setFetchError(null);
+    setFetchAttempts(prev => prev + 1);
     
     try {
-      console.log('Fetching orders from Supabase...');
-      await checkOrdersTableData();
+      console.log(`Fetching orders from Supabase... (Attempt ${fetchAttempts + 1})`);
       
-      // Explicitly log what we're about to do
-      console.log('About to execute query on orders table with join to products');
+      // Check if there's data in the table first
+      const hasData = await checkOrdersTableData();
+      console.log(`Order table has data: ${hasData}`);
       
-      // Simplified query - First try with minimal columns
+      if (!hasData) {
+        console.log('No data found in orders table, will try inserting test data');
+        setOrders([]);
+        setLoading(false);
+        toast.error('Tidak ada pesanan ditemukan dalam database');
+        return;
+      }
+      
+      // Try the standard approach first - with simplified query
+      console.log('Trying standard fetch approach with simplified query...');
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -127,95 +260,99 @@ const AdminOrders = () => {
           customer_address, 
           product_id, 
           quantity, 
-          total_price,
-          product:products(id, name)
+          total_price
         `)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching orders:', error);
-        setFetchError(error.message);
-        toast.error(`Failed to load orders: ${error.message}`);
+        console.error('Error in standard fetch approach:', error);
+        setFetchError(`Error standar: ${error.message}`);
         
-        // Try alternative approach as fallback
-        await fetchOrdersAlternative();
+        // Try alternative approaches
+        console.log('Trying alternative fetch approaches...');
+        
+        // Try simple fetch first
+        const simpleSuccess = await fetchOrdersSimple();
+        
+        if (!simpleSuccess) {
+          // As a last resort, try direct REST API
+          const directSuccess = await checkDirectRestApi();
+          
+          if (!directSuccess) {
+            console.error('All fetch approaches failed');
+            setFetchError('Semua metode pengambilan data gagal. Mohon periksa konsol untuk detail.');
+            setOrders([]);
+          }
+        }
+        
         setLoading(false);
         return;
       }
 
-      // Log the raw data received to help with debugging
-      console.log('Orders raw data:', data);
+      // Log the raw data received 
+      console.log('Standard fetch raw data:', data);
       
       if (!data || data.length === 0) {
-        console.log('No orders found in the database');
-        setOrders([]);
+        console.log('No orders found with standard fetch, trying alternatives');
         
-        // Try alternative approach as fallback
-        await fetchOrdersAlternative();
-      } else {
-        console.log(`Found ${data.length} orders in the database`);
-        console.log('Sample order data:', data[0]);
-        setOrders(data);
-      }
-    } catch (error: any) {
-      console.error('Failed to load orders:', error);
-      setFetchError(error?.message || 'Unknown error');
-      toast.error('Failed to load orders');
-      setOrders([]);
-      
-      // Try alternative approach as fallback
-      await fetchOrdersAlternative();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Manual insertion of test order if requested
-  const insertTestOrder = async () => {
-    try {
-      console.log('Inserting a test order...');
-      
-      // First get a valid product_id
-      const { data: products } = await supabase
-        .from('products')
-        .select('id')
-        .limit(1);
+        // Try simple fetch
+        const simpleSuccess = await fetchOrdersSimple();
         
-      if (!products || products.length === 0) {
-        console.error('No products found for test order');
-        toast.error('Cannot create test order: No products found');
+        if (!simpleSuccess) {
+          // Try direct REST API
+          const directSuccess = await checkDirectRestApi();
+          
+          if (!directSuccess) {
+            setOrders([]);
+            setFetchError('Tidak ada pesanan yang ditemukan dalam database');
+          }
+        }
+        
+        setLoading(false);
         return;
       }
       
-      const product_id = products[0].id;
+      // If we have orders but no product details, fetch them separately
+      console.log(`Found ${data.length} orders, fetching product details...`);
       
-      const testOrder = {
-        customer_name: 'Test Customer',
-        customer_email: 'test@example.com',
-        customer_phone: '123456789',
-        customer_address: 'Test Address 123',
-        product_id,
-        quantity: 1,
-        total_price: 99.99,
-        status: 'Pending'
-      };
+      const ordersWithProducts = await Promise.all(
+        data.map(async (order) => {
+          if (!order.product_id) {
+            return { ...order, product: null };
+          }
+          
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('id, name')
+            .eq('id', order.product_id)
+            .single();
+            
+          if (productError) {
+            console.warn(`Could not fetch product for order ${order.id}:`, productError);
+            return { ...order, product: null };
+          }
+            
+          return { ...order, product: productData };
+        })
+      );
       
-      const { data, error } = await supabase
-        .from('orders')
-        .insert(testOrder)
-        .select();
-        
-      if (error) {
-        console.error('Error creating test order:', error);
-        toast.error('Failed to create test order');
+      console.log('Processed orders with product details:', ordersWithProducts);
+      setOrders(ordersWithProducts);
+      setFetchError(null);
+      
+      if (ordersWithProducts.length > 0) {
+        toast.success(`Berhasil memuat ${ordersWithProducts.length} pesanan`);
       } else {
-        console.log('Test order created:', data);
-        toast.success('Test order created successfully');
-        fetchOrders();
+        toast.warning('Tidak ada pesanan yang ditemukan');
       }
-    } catch (error) {
-      console.error('Error in createTestOrder:', error);
-      toast.error('Failed to create test order');
+      
+    } catch (error: any) {
+      console.error('Exception fetching orders:', error);
+      setFetchError(error?.message || 'Unknown error');
+      toast.error('Gagal memuat pesanan');
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -364,33 +501,64 @@ const AdminOrders = () => {
           </button>
           
           {/* Debug Button - Create Test Order */}
-          {process.env.NODE_ENV !== 'production' && (
-            <button
-              onClick={insertTestOrder}
-              className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-            >
-              <span className="text-sm">Buat Pesanan Test</span>
-            </button>
-          )}
+          <button
+            onClick={insertTestOrder}
+            className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+          >
+            <span className="text-sm">Buat Pesanan Test</span>
+          </button>
+          
+          {/* Toggle Debug Mode */}
+          <button
+            onClick={() => setDebugMode(!debugMode)}
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              debugMode ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <span className="text-sm">{debugMode ? 'Sembunyikan Debug' : 'Tampilkan Debug'}</span>
+          </button>
         </div>
       </div>
 
       {/* Debug information */}
-      {process.env.NODE_ENV !== 'production' && (
+      {debugMode && (
         <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
-          <p className="font-semibold">Debug Info:</p>
-          <p>Total orders loaded: {orders.length}</p>
-          <p>Filtered orders: {filteredOrders.length}</p>
-          <p>Current filter: {statusFilter}</p>
-          <p>Search query: {searchQuery || '(empty)'}</p>
+          <h3 className="font-semibold mb-2">Informasi Debug:</h3>
+          <p>Total pesanan dimuat: {orders.length}</p>
+          <p>Pesanan terfilter: {filteredOrders.length}</p>
+          <p>Filter saat ini: {statusFilter}</p>
+          <p>Kata kunci pencarian: {searchQuery || '(kosong)'}</p>
+          <p>Attempt ke-: {fetchAttempts}</p>
+          <div className="mt-2">
+            <button 
+              onClick={checkDirectRestApi}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded mr-2 hover:bg-blue-300"
+            >
+              Cek API Langsung
+            </button>
+            <button 
+              onClick={fetchOrdersSimple}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300"
+            >
+              Fetch Sederhana
+            </button>
+          </div>
         </div>
       )}
 
       {/* Error message */}
       {fetchError && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm">
-          <p className="font-semibold">Error saat memuat data pesanan:</p>
-          <p>{fetchError}</p>
+          <div className="flex items-start">
+            <AlertCircle size={18} className="mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Error saat memuat data pesanan:</p>
+              <p>{fetchError}</p>
+              <p className="mt-2">
+                Coba buat pesanan test untuk mengisi data, atau periksa konsol browser untuk detail lebih lanjut.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -440,6 +608,14 @@ const AdminOrders = () => {
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
                     {fetchError ? 'Error loading orders' : 'Tidak ada pesanan yang ditemukan'}
+                    <div className="mt-2">
+                      <button 
+                        onClick={insertTestOrder}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                      >
+                        Buat Pesanan Test
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (

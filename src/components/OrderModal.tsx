@@ -54,25 +54,52 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
       const orderId = uuidv4();
       const totalPrice = Number(product.price) * formData.quantity;
       
+      // Ensure product_id is a string
+      const productId = String(product.id);
+      
+      // Log the actual data we're about to send
+      console.log('Creating order with product:', {
+        productObject: product,
+        productId: productId,
+        productIdType: typeof productId
+      });
+      
       // Create order data matching the exact schema in the database
-      // Ensure status is set to 'Pending' which should be a valid value in the constraint
       const orderData = {
         id: orderId,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
         customer_address: formData.alamat,
-        product_id: product.id.toString(),
+        product_id: productId,
         quantity: formData.quantity,
         total_price: totalPrice,
-        status: 'Pending', // This must match a valid value in the database check constraint
+        status: 'Pending',
       };
       
       console.log('Creating order with data:', orderData);
       
-      const { error: orderError } = await supabase
+      // First, verify if the product exists
+      const { data: productCheck, error: productError } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('id', productId)
+        .single();
+        
+      if (productError || !productCheck) {
+        console.error('Product verification failed:', productError || 'Product not found');
+        toast.error('Gagal memverifikasi produk. Harap coba lagi.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      console.log('Product verified:', productCheck);
+      
+      // Create the order
+      const { data, error: orderError } = await supabase
         .from('orders')
-        .insert(orderData);
+        .insert(orderData)
+        .select();
 
       if (orderError) {
         console.error('Order creation error:', orderError);
@@ -81,7 +108,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
         return;
       }
 
-      console.log('Order completed successfully with ID:', orderId);
+      console.log('Order completed successfully:', data);
       setOrderSuccess(true);
       toast.success('Pesanan berhasil dibuat!');
       
