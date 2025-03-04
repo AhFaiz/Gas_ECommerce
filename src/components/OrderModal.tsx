@@ -49,55 +49,22 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
     setIsSubmitting(true);
 
     try {
-      // Generate unique order ID and customer ID
+      // Generate unique order ID
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const customerId = `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const totalPrice = Number(product.price) * formData.quantity;
       
-      // Insert customer data first
-      const customerData = {
-        id: customerId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        alamat: formData.alamat
-      };
-      
-      console.log('Attempting to create customer:', customerData);
-      
-      const { data: createdCustomer, error: customerError } = await supabase
-        .from('customers')
-        .insert(customerData)
-        .select('id')
-        .single();
-      
-      if (customerError) {
-        console.error('Error creating customer:', customerError);
-        const errorMessage = customerError.message || 'Terjadi kesalahan saat membuat profil pelanggan';
-        toast.error('Gagal membuat profil pelanggan: ' + errorMessage);
-        setIsSubmitting(false);
-        return;
-      }
-      
-      if (!createdCustomer || !createdCustomer.id) {
-        console.error('Customer created but no ID returned');
-        toast.error('Gagal mendapatkan ID pelanggan');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log('Customer created successfully:', createdCustomer);
-      
-      // Create order record with status capitalized to match database expectations
+      // Instead of creating a separate customer record, directly insert into orders table
+      // with all customer details, as per the orders table schema
       const orderData = {
         id: orderId,
-        customer_id: createdCustomer.id,
-        total: totalPrice,
-        payment_method: 'cash',
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_address: formData.alamat,
+        product_id: product.id.toString(),
+        quantity: formData.quantity,
+        total_price: totalPrice,
         status: 'Pending', // Capitalize status to match what the Orders page expects
-        produk: product.name,
-        jumlah: formData.quantity,
-        tanggal: new Date().toISOString()
       };
       
       console.log('Creating order with data:', orderData);
@@ -306,7 +273,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, product }) => 
                     <div className="flex items-center justify-center">
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       <span>Memproses...</span>
                     </div>
