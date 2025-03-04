@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,10 +48,17 @@ const AdminOrders = () => {
 
       if (error) {
         console.error('Error fetching orders:', error);
+        toast.error(`Failed to load orders: ${error.message}`);
         throw error;
       }
 
+      // Log the raw data received to help with debugging
       console.log('Orders fetched successfully:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('No orders found in the database');
+      }
+      
       setOrders(data || []);
     } catch (error) {
       console.error('Failed to load orders:', error);
