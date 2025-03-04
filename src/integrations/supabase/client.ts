@@ -55,11 +55,23 @@ supabase.from = function debugFrom(table) {
             statusText: result.statusText
           });
           
-          // Log more detailed data for debugging purposes
           if (result.error) {
             console.error(`Error details for '${table}' query:`, result.error);
           } else if (!result.data || result.data.length === 0) {
-            console.warn(`No data returned for '${table}' query`);
+            console.warn(`No data returned for '${table}' query. This may indicate: 
+              1. The table is empty 
+              2. The query conditions did not match any records
+              3. RLS policies are preventing access to the data`);
+              
+            // Log additional information about the table structure
+            supabase.from(table).select('*', { count: 'exact', head: true })
+              .then(countResult => {
+                console.log(`Table '${table}' metadata check:`, {
+                  estimatedCount: countResult.count,
+                  hasError: !!countResult.error,
+                  error: countResult.error
+                });
+              });
           } else {
             console.log(`First item from '${table}' query:`, result.data[0]);
           }

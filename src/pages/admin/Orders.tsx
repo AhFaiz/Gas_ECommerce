@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Order {
   id: string;
   created_at: string;
-  status: string; // Using string to be more flexible with database values
+  status: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -34,29 +34,99 @@ const AdminOrders = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // Function to check if there's any data in the orders table
+  const checkOrdersTableData = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true });
+      
+      console.log(`Orders table count check: ${count} records found`);
+      
+      if (error) {
+        console.error('Error checking orders count:', error);
+      } else if (count === 0) {
+        console.warn('Orders table is empty. No records exist in the database.');
+      }
+    } catch (err) {
+      console.error('Failed to check orders count:', err);
+    }
+  };
+
+  // Alternative fetch function with a different query approach
+  const fetchOrdersAlternative = async () => {
+    try {
+      console.log('Trying alternative fetch approach...');
+      
+      // First, fetch all orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*');
+
+      if (ordersError) {
+        console.error('Alternative fetch - Error fetching orders:', ordersError);
+        return;
+      }
+
+      console.log('Alternative fetch - Orders data:', ordersData);
+      
+      if (!ordersData || ordersData.length === 0) {
+        console.warn('Alternative fetch - No orders found');
+        return;
+      }
+
+      // Then, for each order, fetch the associated product
+      const ordersWithProducts = await Promise.all(
+        ordersData.map(async (order) => {
+          if (!order.product_id) {
+            return { ...order, product: null };
+          }
+
+          const { data: productData } = await supabase
+            .from('products')
+            .select('id, name')
+            .eq('id', order.product_id)
+            .single();
+
+          return { ...order, product: productData || null };
+        })
+      );
+
+      console.log('Alternative fetch - Orders with products:', ordersWithProducts);
+      
+      if (ordersWithProducts.length > 0) {
+        setOrders(ordersWithProducts);
+        setFetchError(null);
+      }
+    } catch (err) {
+      console.error('Error in alternative fetch approach:', err);
+    }
+  };
+
   const fetchOrders = async () => {
     setLoading(true);
     setFetchError(null);
     
     try {
       console.log('Fetching orders from Supabase...');
+      await checkOrdersTableData();
       
       // Explicitly log what we're about to do
       console.log('About to execute query on orders table with join to products');
       
-      // Make query more robust with explicit column selection
+      // Simplified query - First try with minimal columns
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          id,
-          created_at,
-          status,
-          customer_name,
-          customer_email,
-          customer_phone,
-          customer_address,
-          product_id,
-          quantity,
+          id, 
+          created_at, 
+          status, 
+          customer_name, 
+          customer_email, 
+          customer_phone, 
+          customer_address, 
+          product_id, 
+          quantity, 
           total_price,
           product:products(id, name)
         `)
@@ -66,7 +136,11 @@ const AdminOrders = () => {
         console.error('Error fetching orders:', error);
         setFetchError(error.message);
         toast.error(`Failed to load orders: ${error.message}`);
-        throw error;
+        
+        // Try alternative approach as fallback
+        await fetchOrdersAlternative();
+        setLoading(false);
+        return;
       }
 
       // Log the raw data received to help with debugging
@@ -75,6 +149,9 @@ const AdminOrders = () => {
       if (!data || data.length === 0) {
         console.log('No orders found in the database');
         setOrders([]);
+        
+        // Try alternative approach as fallback
+        await fetchOrdersAlternative();
       } else {
         console.log(`Found ${data.length} orders in the database`);
         console.log('Sample order data:', data[0]);
@@ -85,8 +162,60 @@ const AdminOrders = () => {
       setFetchError(error?.message || 'Unknown error');
       toast.error('Failed to load orders');
       setOrders([]);
+      
+      // Try alternative approach as fallback
+      await fetchOrdersAlternative();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manual insertion of test order if requested
+  const insertTestOrder = async () => {
+    try {
+      console.log('Inserting a test order...');
+      
+      // First get a valid product_id
+      const { data: products } = await supabase
+        .from('products')
+        .select('id')
+        .limit(1);
+        
+      if (!products || products.length === 0) {
+        console.error('No products found for test order');
+        toast.error('Cannot create test order: No products found');
+        return;
+      }
+      
+      const product_id = products[0].id;
+      
+      const testOrder = {
+        customer_name: 'Test Customer',
+        customer_email: 'test@example.com',
+        customer_phone: '123456789',
+        customer_address: 'Test Address 123',
+        product_id,
+        quantity: 1,
+        total_price: 99.99,
+        status: 'Pending'
+      };
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .insert(testOrder)
+        .select();
+        
+      if (error) {
+        console.error('Error creating test order:', error);
+        toast.error('Failed to create test order');
+      } else {
+        console.log('Test order created:', data);
+        toast.success('Test order created successfully');
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error('Error in createTestOrder:', error);
+      toast.error('Failed to create test order');
     }
   };
 
@@ -233,6 +362,16 @@ const AdminOrders = () => {
             <RefreshCw size={18} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
             <span className="text-sm">Refresh</span>
           </button>
+          
+          {/* Debug Button - Create Test Order */}
+          {process.env.NODE_ENV !== 'production' && (
+            <button
+              onClick={insertTestOrder}
+              className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              <span className="text-sm">Buat Pesanan Test</span>
+            </button>
+          )}
         </div>
       </div>
 
