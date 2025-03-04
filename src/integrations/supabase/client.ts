@@ -30,3 +30,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase auth event:', event, session);
 });
+
+// Add additional debugging for database operations
+const originalFrom = supabase.from.bind(supabase);
+supabase.from = function debugFrom(table) {
+  console.log(`Accessing table: ${table}`);
+  return originalFrom(table);
+};

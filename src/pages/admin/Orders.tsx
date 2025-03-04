@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Eye, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+// Update the Order interface to accept any string for status
+// Then use type assertion to convert it to the expected values
 interface Order {
   id: string;
   created_at: string;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'New';
+  status: string; // Changed from union type to string to match database response
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -20,6 +21,9 @@ interface Order {
     id: string;
   };
 }
+
+// Define a type for the allowed status values for type checking in the UI
+type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'New';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -82,7 +86,15 @@ const AdminOrders = () => {
     setSelectedOrder(null);
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
+  // Update the handleUpdateStatus to use string for status but ensure we only pass valid values
+  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+    // Validate that the new status is one of the allowed values
+    const validStatus: OrderStatus[] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'New'];
+    if (!validStatus.includes(newStatus as OrderStatus)) {
+      toast.error(`Invalid status: ${newStatus}`);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('orders')
@@ -226,6 +238,7 @@ const AdminOrders = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
+              {/* ... keep existing code (loading state and empty state handling) */}
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center">
@@ -348,7 +361,7 @@ const AdminOrders = () => {
                     {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'New'].map((status) => (
                       <button
                         key={status}
-                        onClick={() => handleUpdateStatus(selectedOrder.id, status as Order['status'])}
+                        onClick={() => handleUpdateStatus(selectedOrder.id, status)}
                         disabled={selectedOrder.status === status}
                         className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors
                           ${selectedOrder.status === status 
