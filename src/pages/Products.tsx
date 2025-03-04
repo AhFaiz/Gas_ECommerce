@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -25,14 +26,6 @@ const categories = [
   'Accessories'
 ];
 
-const priceRanges = [
-  { label: 'All Prices', value: 'all' },
-  { label: 'Under $50', value: 'under-50' },
-  { label: '$50 - $100', value: '50-100' },
-  { label: '$100 - $200', value: '100-200' },
-  { label: 'Over $200', value: 'over-200' }
-];
-
 const sortOptions = [
   { label: 'Price: Low to High', value: 'price-asc' },
   { label: 'Price: High to Low', value: 'price-desc' },
@@ -43,7 +36,6 @@ const sortOptions = [
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('price-asc');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -98,27 +90,6 @@ const Products = () => {
       filterCount++;
     }
     
-    // Apply price range filter
-    if (selectedPriceRange !== 'all') {
-      switch (selectedPriceRange) {
-        case 'under-50':
-          result = result.filter(product => product.price < 50);
-          break;
-        case '50-100':
-          result = result.filter(product => product.price >= 50 && product.price <= 100);
-          break;
-        case '100-200':
-          result = result.filter(product => product.price > 100 && product.price <= 200);
-          break;
-        case 'over-200':
-          result = result.filter(product => product.price > 200);
-          break;
-        default:
-          break;
-      }
-      filterCount++;
-    }
-    
     // Apply sorting
     switch (sortBy) {
       case 'price-asc':
@@ -139,12 +110,11 @@ const Products = () => {
     
     setActiveFiltersCount(filterCount);
     setFilteredProducts(result);
-  }, [searchQuery, selectedCategory, selectedPriceRange, sortBy, products]);
+  }, [searchQuery, selectedCategory, sortBy, products]);
   
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('All');
-    setSelectedPriceRange('all');
     setSortBy('price-asc');
   };
 
@@ -221,7 +191,7 @@ const Products = () => {
               </div>
               
               {/* Categories */}
-              <div className="mb-6">
+              <div>
                 <h4 className="font-medium text-sm mb-2">Categories</h4>
                 <div className="space-y-2">
                   {categories.map((category) => (
@@ -242,34 +212,6 @@ const Products = () => {
                           }`} 
                         />
                         {category}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Price Range */}
-              <div>
-                <h4 className="font-medium text-sm mb-2">Price Range</h4>
-                <div className="space-y-2">
-                  {priceRanges.map((range) => (
-                    <div key={range.value} className="flex items-center">
-                      <button
-                        onClick={() => setSelectedPriceRange(range.value)}
-                        className={`text-sm flex items-center w-full transition-all-200 hover:text-primary ${
-                          selectedPriceRange === range.value 
-                            ? 'text-primary font-medium' 
-                            : 'text-foreground/80'
-                        }`}
-                      >
-                        <span 
-                          className={`w-3 h-3 rounded-full mr-2 ${
-                            selectedPriceRange === range.value 
-                              ? 'bg-primary' 
-                              : 'border border-gray-300'
-                          }`} 
-                        />
-                        {range.label}
                       </button>
                     </div>
                   ))}
