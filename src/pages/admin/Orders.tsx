@@ -33,7 +33,6 @@ const AdminOrders = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchAttempts, setFetchAttempts] = useState(0);
-  const [debugMode, setDebugMode] = useState(true);
 
   // Function to check if there's any data in the orders table using direct REST API
   const checkDirectRestApi = async () => {
@@ -171,57 +170,6 @@ const AdminOrders = () => {
     } catch (err) {
       console.error('Error in simple fetch approach:', err);
       return false;
-    }
-  };
-
-  // Manual insertion of test order if requested
-  const insertTestOrder = async () => {
-    try {
-      console.log('Inserting a test order...');
-      
-      // First get a valid product_id
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, name, price')
-        .limit(1);
-        
-      if (!products || products.length === 0) {
-        toast.error('No products found for test order');
-        return;
-      }
-      
-      const product = products[0];
-      console.log('Using product for test order:', product);
-      
-      const testOrder = {
-        customer_name: `Test Customer ${Math.floor(Math.random() * 1000)}`,
-        customer_email: `test${Math.floor(Math.random() * 1000)}@example.com`,
-        customer_phone: `123${Math.floor(Math.random() * 10000000)}`,
-        customer_address: `Test Address ${Math.floor(Math.random() * 1000)}`,
-        product_id: product.id,
-        quantity: 1,
-        total_price: product.price || 99.99,
-        status: 'Pending'
-      };
-      
-      console.log('Creating test order with data:', testOrder);
-      
-      const { data, error } = await supabase
-        .from('orders')
-        .insert(testOrder)
-        .select();
-        
-      if (error) {
-        console.error('Error creating test order:', error);
-        toast.error('Failed to create test order: ' + error.message);
-      } else {
-        console.log('Test order created:', data);
-        toast.success('Test order created successfully');
-        fetchOrders();
-      }
-    } catch (error) {
-      console.error('Exception in createTestOrder:', error);
-      toast.error('Failed to create test order');
     }
   };
 
@@ -500,52 +448,8 @@ const AdminOrders = () => {
             <RefreshCw size={18} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
             <span className="text-sm">Refresh</span>
           </button>
-          
-          {/* Debug Button - Create Test Order */}
-          <button
-            onClick={insertTestOrder}
-            className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            <span className="text-sm">Buat Pesanan Test</span>
-          </button>
-          
-          {/* Toggle Debug Mode */}
-          <button
-            onClick={() => setDebugMode(!debugMode)}
-            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-              debugMode ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <span className="text-sm">{debugMode ? 'Sembunyikan Debug' : 'Tampilkan Debug'}</span>
-          </button>
         </div>
       </div>
-
-      {/* Debug information */}
-      {debugMode && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
-          <h3 className="font-semibold mb-2">Informasi Debug:</h3>
-          <p>Total pesanan dimuat: {orders.length}</p>
-          <p>Pesanan terfilter: {filteredOrders.length}</p>
-          <p>Filter saat ini: {statusFilter}</p>
-          <p>Kata kunci pencarian: {searchQuery || '(kosong)'}</p>
-          <p>Attempt ke-: {fetchAttempts}</p>
-          <div className="mt-2">
-            <button 
-              onClick={checkDirectRestApi}
-              className="px-3 py-1 bg-blue-200 text-blue-800 rounded mr-2 hover:bg-blue-300"
-            >
-              Cek API Langsung
-            </button>
-            <button 
-              onClick={fetchOrdersSimple}
-              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300"
-            >
-              Fetch Sederhana
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Error message */}
       {fetchError && (
@@ -556,7 +460,7 @@ const AdminOrders = () => {
               <p className="font-semibold">Error saat memuat data pesanan:</p>
               <p>{fetchError}</p>
               <p className="mt-2">
-                Coba buat pesanan test untuk mengisi data, atau periksa konsol browser untuk detail lebih lanjut.
+                Periksa konsol browser untuk detail lebih lanjut.
               </p>
             </div>
           </div>
@@ -609,14 +513,6 @@ const AdminOrders = () => {
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
                     {fetchError ? 'Error loading orders' : 'Tidak ada pesanan yang ditemukan'}
-                    <div className="mt-2">
-                      <button 
-                        onClick={insertTestOrder}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
-                      >
-                        Buat Pesanan Test
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ) : (
