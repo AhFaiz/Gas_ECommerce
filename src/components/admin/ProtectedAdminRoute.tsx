@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '../../integrations/supabase/client';
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
@@ -20,13 +21,40 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
       path: location.pathname 
     });
     
-    // If we're in development mode, auto-authenticate as admin123 for testing
+    // If we're in development mode, auto-authenticate and set RLS bypass session
     if (process.env.NODE_ENV === 'development' && !isAuthenticated) {
       console.log('Development mode - Auto authenticating for testing');
+      
+      // Auto-authenticate
       localStorage.setItem('adminAuthenticated', 'true');
       localStorage.setItem('adminUsername', 'admin123');
+      
+      // Set a Supabase session for the admin user
+      const adminLogin = async () => {
+        try {
+          // Try to sign in as a special admin user to bypass RLS
+          // This is only for development purposes
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: 'admin@example.com',
+            password: 'admin123'
+          });
+          
+          if (error) {
+            console.log('Unable to auto-login with Supabase, creating anonymous session instead');
+            // If no admin user exists, create an anonymous session
+            await supabase.auth.signInAnonymously();
+          } else {
+            console.log('Auto-logged in with Supabase auth:', data);
+          }
+        } catch (err) {
+          console.error('Error during auto-authentication:', err);
+          // Fallback to anonymous session
+          await supabase.auth.signInAnonymously();
+        }
+      };
+      
+      adminLogin();
       toast.info('Auto-login for development enabled');
-      window.location.reload(); // Reload to apply the change
     }
   }, [location.pathname]);
 

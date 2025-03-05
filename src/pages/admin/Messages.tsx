@@ -31,7 +31,21 @@ const AdminMessages = () => {
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
 
   useEffect(() => {
-    fetchMessages();
+    // Check if authenticated with Supabase
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log('Current Supabase session:', data.session);
+      
+      // If no session, try to create an anonymous session for development
+      if (!data.session && process.env.NODE_ENV === 'development') {
+        console.log('No Supabase session, creating anonymous session for development');
+        await supabase.auth.signInAnonymously();
+      }
+      
+      fetchMessages();
+    };
+    
+    checkAuth();
   }, []);
 
   const fetchStatusCounts = async () => {
@@ -65,6 +79,15 @@ const AdminMessages = () => {
     try {
       console.log('Fetching messages from Supabase...');
       
+      // First try a direct fetch to check RLS is working
+      const { data: rawData, error: rawError } = await supabase
+        .from('client_messages')
+        .select('*')
+        .limit(1);
+        
+      console.log('RLS test result:', { data: rawData, error: rawError });
+      
+      // Actual fetch for all messages
       const { data, error } = await supabase
         .from('client_messages')
         .select('*')
@@ -72,7 +95,8 @@ const AdminMessages = () => {
 
       if (error) {
         console.error('Error fetching messages:', error);
-        toast.error('Failed to load messages');
+        console.error('Error details:', error.details, error.message, error.code);
+        toast.error(`Failed to load messages: ${error.message}`);
         setIsLoading(false);
         return;
       }
@@ -140,6 +164,8 @@ const AdminMessages = () => {
     const newStarredStatus = !messageToUpdate.starred;
     
     try {
+      console.log(`Updating starred status for message ${id} to: ${newStarredStatus}`);
+      
       const { error } = await supabase
         .from('client_messages')
         .update({ starred: newStarredStatus })
@@ -147,7 +173,8 @@ const AdminMessages = () => {
         
       if (error) {
         console.error('Error updating starred status:', error);
-        toast.error('Failed to update starred status');
+        console.error('Error details:', error.details, error.message, error.code);
+        toast.error(`Failed to update starred status: ${error.message}`);
         return;
       }
       
@@ -165,6 +192,8 @@ const AdminMessages = () => {
       if (statusFilter === 'Starred') {
         fetchStatusCounts();
       }
+      
+      toast.success('Message starred status updated');
     } catch (error) {
       console.error('Unexpected error updating starred status:', error);
       toast.error('An unexpected error occurred');
@@ -189,7 +218,8 @@ const AdminMessages = () => {
         
       if (error) {
         console.error('Error updating message status:', error);
-        toast.error('Failed to update message status');
+        console.error('Error details:', error.details, error.message, error.code);
+        toast.error(`Failed to update message status: ${error.message}`);
         return;
       }
       
@@ -216,6 +246,8 @@ const AdminMessages = () => {
   const handleDeleteMessage = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
       try {
+        console.log(`Deleting message with ID: ${id}`);
+        
         const { error } = await supabase
           .from('client_messages')
           .delete()
@@ -223,7 +255,8 @@ const AdminMessages = () => {
           
         if (error) {
           console.error('Error deleting message:', error);
-          toast.error('Failed to delete message');
+          console.error('Error details:', error.details, error.message, error.code);
+          toast.error(`Failed to delete message: ${error.message}`);
           return;
         }
         
