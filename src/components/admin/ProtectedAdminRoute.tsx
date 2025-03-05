@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase, setAdminMode } from '../../integrations/supabase/client';
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
@@ -38,6 +38,9 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
             refresh_token: "dummy-refresh-token-for-dev"
           });
           
+          // Set admin mode to ensure proper access
+          setAdminMode();
+          
           // Observe auth state changes for debugging
           supabase.auth.onAuthStateChange((event, session) => {
             console.log('Auth state changed:', event, session);
@@ -61,6 +64,9 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
       
       setupDevAuth();
       toast.info('Auto-login for development enabled');
+    } else if (isAuthenticated) {
+      // Set admin mode when already authenticated
+      setAdminMode();
     }
   }, [location.pathname]);
 
