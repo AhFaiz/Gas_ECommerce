@@ -1,72 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// Sample message data (in a real app, this would come from an API)
-const initialMessages = [
-  {
-    id: 1,
-    name: "Ahmad Fauzi",
-    email: "ahmad.fauzi@example.com",
-    phone: "+62 812-3456-7890",
-    subject: "Product Information",
-    message: "I would like to know more about the industrial gas cylinders you offer. Do you have any brochures or specifications you could send me?",
-    status: "Unread" as const,
-    starred: false,
-    date: "2023-06-24T09:15:00",
-  },
-  {
-    id: 2,
-    name: "Siti Rahayu",
-    email: "siti.rahayu@example.com",
-    phone: "+62 823-4567-8901",
-    subject: "Delivery Question",
-    message: "I ordered a gas cylinder last week and wanted to check on the estimated delivery time. My order number is ORD-089.",
-    status: "Read" as const,
-    starred: true,
-    date: "2023-06-23T14:30:00",
-  },
-  {
-    id: 3,
-    name: "Budi Santoso",
-    email: "budi.santoso@example.com",
-    phone: "+62 834-5678-9012",
-    subject: "Bulk Order Inquiry",
-    message: "Our restaurant chain is looking to place a bulk order for LPG cylinders. Could someone from your sales team contact me to discuss pricing and terms?",
-    status: "Replied" as const,
-    starred: false,
-    date: "2023-06-22T10:45:00",
-  },
-  {
-    id: 4,
-    name: "Dewi Putri",
-    email: "dewi.putri@example.com",
-    phone: "+62 845-6789-0123",
-    subject: "Technical Support",
-    message: "I'm having issues with the regulator I purchased from your store. The pressure seems inconsistent and I'm concerned about safety. Can you advise?",
-    status: "Unread" as const,
-    starred: false,
-    date: "2023-06-24T16:20:00",
-  },
-  {
-    id: 5,
-    name: "Eko Prasetyo",
-    email: "eko.prasetyo@example.com",
-    phone: "+62 856-7890-1234",
-    subject: "Partnership Opportunity",
-    message: "I represent a chain of hardware stores across Java and would like to discuss a potential partnership to sell your products in our stores.",
-    status: "Read" as const,
-    starred: true,
-    date: "2023-06-21T11:05:00",
-  },
-];
+import { supabase } from '../../integrations/supabase/client';
 
 interface ClientMessage {
-  id: number;
+  id: string;
   name: string;
   email: string;
-  phone: string;
+  phone: string | null;
   subject: string;
   message: string;
   status: 'Unread' | 'Read' | 'Replied';
@@ -75,12 +17,40 @@ interface ClientMessage {
 }
 
 const AdminMessages = () => {
-  const [messages, setMessages] = useState<ClientMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<ClientMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedMessage, setSelectedMessage] = useState<ClientMessage | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('client_messages')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to load messages');
+        return;
+      }
+
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Unexpected error fetching messages:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter messages based on search query and status filter
   const filteredMessages = messages.filter(message => {
@@ -96,14 +66,28 @@ const AdminMessages = () => {
     return matchesSearch && matchesStatus && matchesStarred;
   });
 
-  const handleViewMessageDetails = (message: ClientMessage) => {
-    // Mark as read when opening
+  const handleViewMessageDetails = async (message: ClientMessage) => {
+    // Mark as read when opening if it's unread
     if (message.status === 'Unread') {
-      const updatedMessages = messages.map(m => 
-        m.id === message.id ? { ...m, status: 'Read' as const } : m
-      );
-      setMessages(updatedMessages);
-      message = { ...message, status: 'Read' };
+      try {
+        const { error } = await supabase
+          .from('client_messages')
+          .update({ status: 'Read' })
+          .eq('id', message.id);
+          
+        if (error) {
+          console.error('Error updating message status:', error);
+        } else {
+          // Update local state
+          const updatedMessages = messages.map(m => 
+            m.id === message.id ? { ...m, status: 'Read' as const } : m
+          );
+          setMessages(updatedMessages);
+          message = { ...message, status: 'Read' };
+        }
+      } catch (error) {
+        console.error('Unexpected error updating message status:', error);
+      }
     }
     
     setSelectedMessage(message);
@@ -116,29 +100,67 @@ const AdminMessages = () => {
     setSelectedMessage(null);
   };
 
-  const handleToggleStarred = (id: number) => {
-    const updatedMessages = messages.map(message => 
-      message.id === id ? { ...message, starred: !message.starred } : message
-    );
-    setMessages(updatedMessages);
+  const handleToggleStarred = async (id: string) => {
+    const messageToUpdate = messages.find(m => m.id === id);
+    if (!messageToUpdate) return;
     
-    if (selectedMessage && selectedMessage.id === id) {
-      setSelectedMessage({ ...selectedMessage, starred: !selectedMessage.starred });
+    const newStarredStatus = !messageToUpdate.starred;
+    
+    try {
+      const { error } = await supabase
+        .from('client_messages')
+        .update({ starred: newStarredStatus })
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error updating starred status:', error);
+        toast.error('Failed to update starred status');
+        return;
+      }
+      
+      // Update local state
+      const updatedMessages = messages.map(message => 
+        message.id === id ? { ...message, starred: newStarredStatus } : message
+      );
+      setMessages(updatedMessages);
+      
+      if (selectedMessage && selectedMessage.id === id) {
+        setSelectedMessage({ ...selectedMessage, starred: newStarredStatus });
+      }
+    } catch (error) {
+      console.error('Unexpected error updating starred status:', error);
+      toast.error('An unexpected error occurred');
     }
   };
 
-  const handleDeleteMessage = (id: number) => {
+  const handleDeleteMessage = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
-      setMessages(messages.filter(message => message.id !== id));
-      toast.success('Message deleted successfully');
-      
-      if (selectedMessage && selectedMessage.id === id) {
-        handleCloseModal();
+      try {
+        const { error } = await supabase
+          .from('client_messages')
+          .delete()
+          .eq('id', id);
+          
+        if (error) {
+          console.error('Error deleting message:', error);
+          toast.error('Failed to delete message');
+          return;
+        }
+        
+        setMessages(messages.filter(message => message.id !== id));
+        toast.success('Message deleted successfully');
+        
+        if (selectedMessage && selectedMessage.id === id) {
+          handleCloseModal();
+        }
+      } catch (error) {
+        console.error('Unexpected error deleting message:', error);
+        toast.error('An unexpected error occurred');
       }
     }
   };
 
-  const handleReplySubmit = (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedMessage) return;
@@ -148,19 +170,35 @@ const AdminMessages = () => {
       return;
     }
     
-    // Update message status to replied
-    const updatedMessages = messages.map(message => 
-      message.id === selectedMessage.id ? { ...message, status: 'Replied' as const } : message
-    );
-    
-    setMessages(updatedMessages);
-    setSelectedMessage({ ...selectedMessage, status: 'Replied' });
-    
-    // In a real app, this would send the reply to the customer
-    console.log(`Reply to ${selectedMessage.email}:`, replyText);
-    
-    toast.success('Reply sent successfully');
-    setReplyText('');
+    try {
+      const { error } = await supabase
+        .from('client_messages')
+        .update({ status: 'Replied' })
+        .eq('id', selectedMessage.id);
+        
+      if (error) {
+        console.error('Error updating reply status:', error);
+        toast.error('Failed to update reply status');
+        return;
+      }
+      
+      // Update local state
+      const updatedMessages = messages.map(message => 
+        message.id === selectedMessage.id ? { ...message, status: 'Replied' as const } : message
+      );
+      
+      setMessages(updatedMessages);
+      setSelectedMessage({ ...selectedMessage, status: 'Replied' });
+      
+      // In a real app, this would send the reply to the customer
+      console.log(`Reply to ${selectedMessage.email}:`, replyText);
+      
+      toast.success('Reply sent successfully');
+      setReplyText('');
+    } catch (error) {
+      console.error('Unexpected error sending reply:', error);
+      toast.error('An unexpected error occurred');
+    }
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -302,7 +340,11 @@ const AdminMessages = () => {
           
           {/* Messages List */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            {filteredMessages.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-10">
+                <p className="text-gray-500">Loading messages...</p>
+              </div>
+            ) : filteredMessages.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-gray-500">No messages found matching your criteria.</p>
               </div>
