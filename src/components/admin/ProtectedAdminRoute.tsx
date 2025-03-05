@@ -21,7 +21,7 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
       path: location.pathname 
     });
     
-    // If we're in development mode, auto-authenticate and set RLS bypass
+    // If we're in development mode, auto-authenticate and set service role bypass
     if (process.env.NODE_ENV === 'development' && !isAuthenticated) {
       console.log('Development mode - Auto authenticating for testing');
       
@@ -29,10 +29,16 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
       localStorage.setItem('adminAuthenticated', 'true');
       localStorage.setItem('adminUsername', 'admin123');
       
-      // Setting up service role authentication for development
+      // Set up service role access for admin
       const setupDevAuth = async () => {
         try {
-          // Create a custom header for admin access
+          // This will let Supabase client bypass RLS in dev mode
+          supabase.auth.setSession({
+            access_token: "dummy-access-token-for-dev",
+            refresh_token: "dummy-refresh-token-for-dev"
+          });
+          
+          // Observe auth state changes for debugging
           supabase.auth.onAuthStateChange((event, session) => {
             console.log('Auth state changed:', event, session);
           });
