@@ -1,15 +1,36 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   ShoppingCart, 
   Users, 
   TrendingUp, 
   ArrowUp, 
-  ArrowDown 
+  ArrowDown,
+  Clock
 } from 'lucide-react';
 
 const AdminDashboard = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    // Clean up interval on component unmount
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  // Format time as HH:MM:SS
+  const formattedTime = currentTime.toLocaleTimeString();
+  
+  // Get admin username from localStorage (fallback to "Admin" if not found)
+  const adminUsername = localStorage.getItem('adminUsername') || 'Admin';
+  
   // Mock data for dashboard
   const stats = [
     {
@@ -56,9 +77,16 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-gray-800">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Welcome to your admin dashboard</p>
+      {/* Welcome Section with Clock */}
+      <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col md:flex-row justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-gray-800">SELAMAT DATANG, {adminUsername}</h1>
+          <p className="text-sm text-gray-500 mt-1">Welcome to your admin dashboard</p>
+        </div>
+        <div className="mt-4 md:mt-0 flex items-center bg-gray-50 px-4 py-2 rounded-lg">
+          <Clock className="h-5 w-5 text-primary mr-2" />
+          <span className="text-lg font-medium">{formattedTime}</span>
+        </div>
       </div>
 
       {/* Stats Grid */}
