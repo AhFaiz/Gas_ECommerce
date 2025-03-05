@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, Eye, Trash2, ChevronDown, Star, Filter } from 'lucide-react';
 import { toast } from 'sonner';
@@ -65,7 +64,6 @@ const AdminMessages = () => {
     try {
       console.log('Fetching messages from Supabase...');
       
-      // Try with the Supabase client
       const { data, error } = await supabase
         .from('client_messages')
         .select('*')
@@ -123,19 +121,13 @@ const AdminMessages = () => {
       
       // Convert and validate the status field before setting state
       const validMessages = (data || []).map(msg => {
-        // Convert old statuses to new ones
+        // Konversi status lama ke status baru
         let newStatus: 'Baru' | 'Dihubungi' | 'Selesai';
         
-        if (msg.status === 'Unread') {
-          newStatus = 'Baru';
-        } else if (msg.status === 'Read') {
-          newStatus = 'Baru'; // Keep as Baru for now
-        } else if (msg.status === 'Replied') {
-          newStatus = 'Dihubungi';
-        } else if (['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
-          newStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
+        if (!['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
+          newStatus = 'Baru'; // Default untuk semua status lama
         } else {
-          newStatus = 'Baru'; // Default
+          newStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
         }
         
         return {
