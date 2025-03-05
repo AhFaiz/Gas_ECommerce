@@ -1,4 +1,4 @@
-
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -344,25 +344,6 @@ const AdminMessages = () => {
       <div>
         <h1 className="text-2xl font-display font-bold text-gray-800 mb-2">Client Messages</h1>
         <p className="text-gray-500">Manage all client inquiries and messages</p>
-      </div>
-
-      {/* Status Dashboard */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {statusCounts.map((item) => (
-          <div 
-            key={item.status}
-            className={`p-4 rounded-lg shadow-sm flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${
-              statusFilter === item.status ? 'ring-2 ring-primary' : ''
-            }`}
-            onClick={() => setStatusFilter(item.status)}
-          >
-            <div className={`text-sm font-medium rounded-full px-3 py-1 mb-2 ${getStatusBadgeClass(item.status)}`}>
-              {item.status}
-            </div>
-            <div className="text-2xl font-bold">{item.count}</div>
-            <div className="text-xs text-gray-500 mt-1">messages</div>
-          </div>
-        ))}
       </div>
 
       {/* Filter and Search */}
@@ -781,12 +762,3 @@ const AdminMessages = () => {
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AdminMessages;
