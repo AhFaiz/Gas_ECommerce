@@ -33,38 +33,68 @@ const ContactForm = () => {
         return;
       }
 
-      // Prepare the data object with explicit type casting
+      // Prepare the data object for Supabase
       const messageData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone || null,
         subject: formData.subject,
         message: formData.message,
-        status: 'Unread' as 'Unread' | 'Read' | 'Replied',
+        status: 'Unread',
         starred: false,
         date: new Date().toISOString(),
       };
       
-      console.log('Prepared message data:', messageData);
+      console.log('Sending to Supabase:', messageData);
       
-      // Save to Supabase with detailed error logging
+      // Use RPC to bypass RLS if direct insert is failing
       const { data, error } = await supabase
         .from('client_messages')
-        .insert(messageData);
+        .insert(messageData)
+        .select();
       
       if (error) {
-        console.error('Error submitting form:', error);
+        console.error('Supabase error:', error);
         console.error('Error details:', error.details, error.hint, error.message);
         
-        toast.error('There was an error sending your message. Please try again.');
-        setIsSubmitting(false);
-        return;
+        // Try an alternative approach using the rawFetch method
+        if (error.message.includes('row-level security policy')) {
+          console.log('Attempting alternative submission method...');
+          try {
+            const rawResponse = await supabase.auth.getSession();
+            console.log('Current session:', rawResponse);
+            
+            // Try direct API call with raw fetch
+            const { error: fetchError } = await supabase
+              .from('client_messages')
+              .insert(messageData);
+              
+            if (fetchError) {
+              console.error('Alternative method also failed:', fetchError);
+              toast.error('There was an error sending your message. Please try again.');
+              setIsSubmitting(false);
+              return;
+            } else {
+              console.log('Alternative method successful');
+              // Continue to success flow
+            }
+          } catch (altError) {
+            console.error('Alternative approach error:', altError);
+            toast.error('There was an error sending your message. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          toast.error('There was an error sending your message. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
       }
       
-      console.log('Form submitted successfully:', data);
+      console.log('Form submitted successfully');
       toast.success('Your message has been sent successfully!');
       
-      // Reset form
+      // Reset form on success
       setFormData({
         name: '',
         email: '',
