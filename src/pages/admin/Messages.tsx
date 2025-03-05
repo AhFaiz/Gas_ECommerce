@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
 interface ClientMessage {
   id: string;
@@ -46,10 +45,10 @@ const AdminMessages = () => {
         // Try with a direct API call as a fallback
         try {
           console.log('Attempting direct API call to fetch messages...');
-          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages?select=*&order=date.desc`, {
+          const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*&order=date.desc`, {
             headers: {
-              'apikey': `${supabase.supabaseKey}`,
-              'Authorization': `Bearer ${supabase.supabaseKey}`
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`
             }
           });
           

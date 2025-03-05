@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../integrations/supabase/client';
+import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../integrations/supabase/client';
 
 const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,12 +59,12 @@ const ContactForm = () => {
         // Try direct API method for debugging
         try {
           console.log('Attempting direct API call...');
-          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages`, {
+          const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'apikey': `${supabase.supabaseKey}`,
-              'Authorization': `Bearer ${supabase.supabaseKey}`,
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
               'Prefer': 'return=minimal'
             },
             body: JSON.stringify(messageData)
