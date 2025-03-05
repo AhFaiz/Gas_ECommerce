@@ -4,32 +4,6 @@ import { ArrowRight, ShieldCheck, Truck, Clock, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import Hero from '../components/Hero';
-import Testimonial from '../components/Testimonial';
-
-// Sample testimonial data
-const testimonials = [
-  {
-    name: 'Sarah Johnson',
-    role: 'Homeowner',
-    avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-    content: 'The service is exceptional! My gas cylinders are always delivered on time, and the staff is very courteous. I\'ve been a customer for over 2 years now and highly recommend Gasify.',
-    rating: 5,
-  },
-  {
-    name: 'Michael Chen',
-    role: 'Restaurant Owner',
-    avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-    content: 'As a restaurant owner, reliable gas supply is critical for my business. Gasify has never let me down, even during peak seasons. Their commercial solutions are perfect for our needs.',
-    rating: 5,
-  },
-  {
-    name: 'David Rodriguez',
-    role: 'Factory Manager',
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-    content: 'We\'ve partnered with Gasify for our industrial gas needs for the last 3 years. Their bulk delivery options and competitive pricing have helped us optimize our operations.',
-    rating: 4,
-  }
-];
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -96,58 +70,6 @@ const Index = () => {
                 Contact Sales
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Testimonials Section */}
-      <section className="section-padding bg-gray-50">
-        <div className="page-container">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">What Our Customers Say</h2>
-            <p className="text-foreground/70">Don't just take our word for it – here's what customers have to say about our products and services</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <div 
-                key={index} 
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <Testimonial {...testimonial} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Newsletter Section */}
-      <section className="section-padding bg-white">
-        <div className="page-container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Stay Updated</h2>
-            <p className="text-foreground/70 mb-8">
-              Subscribe to our newsletter for the latest product updates, promotions, and industry insights.
-            </p>
-            
-            <form className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="flex-grow px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all-200"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-all-200 whitespace-nowrap"
-              >
-                Subscribe
-              </button>
-            </form>
-            <p className="text-xs text-foreground/60 mt-3">
-              By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
-            </p>
           </div>
         </div>
       </section>
