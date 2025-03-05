@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, Eye, Trash2, ChevronDown, Star, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
+import { supabase } from '../../integrations/supabase/client';
 
 interface ClientMessage {
   id: string;
@@ -31,17 +32,16 @@ const AdminMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    fetchStatusCounts();
   }, []);
 
   const fetchStatusCounts = async () => {
     try {
-      // Simpler approach without using the function due to constraint issues
+      // Get counts for each status type
       const statusList = ['Baru', 'Dihubungi', 'Selesai'];
       const countsPromises = statusList.map(async (status) => {
-        const { data, error, count } = await supabase
+        const { count, error } = await supabase
           .from('client_messages')
-          .select('id', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: false })
           .eq('status', status);
           
         if (error) {
@@ -53,6 +53,7 @@ const AdminMessages = () => {
       });
       
       const results = await Promise.all(countsPromises);
+      console.log('Status counts:', results);
       setStatusCounts(results);
     } catch (error) {
       console.error('Error fetching status counts:', error);
@@ -70,76 +71,35 @@ const AdminMessages = () => {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching messages with Supabase client:', error);
-        
-        // Try with a direct API call as a fallback
-        try {
-          console.log('Attempting direct API call to fetch messages...');
-          const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*&order=date.desc`, {
-            headers: {
-              'apikey': SUPABASE_API_KEY,
-              'Authorization': `Bearer ${SUPABASE_API_KEY}`
-            }
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Direct API call failed:', response.status, errorText);
-            toast.error('Failed to load messages');
-            setIsLoading(false);
-            return;
-          }
-          
-          const directData = await response.json();
-          console.log('Direct API call succeeded, messages:', directData);
-          
-          // Process the data the same way as the Supabase client version
-          const validMessages = (directData || []).map((msg: any) => {
-            const validStatus = ['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '') 
-              ? (msg.status as 'Baru' | 'Dihubungi' | 'Selesai') 
-              : 'Baru';
-            
-            return {
-              ...msg,
-              status: validStatus,
-              starred: Boolean(msg.starred)
-            } as ClientMessage;
-          });
-          
-          setMessages(validMessages);
-          setIsLoading(false);
-          return;
-        } catch (directError) {
-          console.error('Direct API call exception:', directError);
-          toast.error('Failed to load messages');
-          setIsLoading(false);
-          return;
-        }
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to load messages');
+        setIsLoading(false);
+        return;
       }
 
       console.log('Messages retrieved successfully:', data);
       
-      // Convert and validate the status field before setting state
+      // Convert and validate the data before setting state
       const validMessages = (data || []).map(msg => {
-        // Konversi status lama ke status baru
-        let newStatus: 'Baru' | 'Dihubungi' | 'Selesai';
+        // Ensure status is one of the allowed values
+        let validStatus: 'Baru' | 'Dihubungi' | 'Selesai';
         
         if (!['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
-          newStatus = 'Baru'; // Default untuk semua status lama
+          validStatus = 'Baru'; // Default status if invalid
         } else {
-          newStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
+          validStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
         }
         
         return {
           ...msg,
-          status: newStatus,
+          status: validStatus,
           // Ensure boolean type for starred
           starred: Boolean(msg.starred)
         } as ClientMessage;
       });
 
       setMessages(validMessages);
-      // After setting messages, refresh status counts
+      // After setting messages, fetch status counts
       fetchStatusCounts();
     } catch (error) {
       console.error('Unexpected error fetching messages:', error);
@@ -164,22 +124,6 @@ const AdminMessages = () => {
   });
 
   const handleViewMessageDetails = async (message: ClientMessage) => {
-    // Mark as read when opening if it's "Baru"
-    if (message.status === 'Baru') {
-      try {
-        const { error } = await supabase
-          .from('client_messages')
-          .update({ status: 'Baru' }) // Keep status as Baru but mark as read
-          .eq('id', message.id);
-          
-        if (error) {
-          console.error('Error updating message status:', error);
-        }
-      } catch (error) {
-        console.error('Unexpected error updating message status:', error);
-      }
-    }
-    
     setSelectedMessage(message);
     setIsDetailsModalOpen(true);
   };
@@ -215,6 +159,11 @@ const AdminMessages = () => {
       
       if (selectedMessage && selectedMessage.id === id) {
         setSelectedMessage({ ...selectedMessage, starred: newStarredStatus });
+      }
+      
+      // Refresh status counts if needed
+      if (statusFilter === 'Starred') {
+        fetchStatusCounts();
       }
     } catch (error) {
       console.error('Unexpected error updating starred status:', error);
