@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -337,6 +338,125 @@ const AdminMessages = () => {
       second: '2-digit'
     });
   };
+
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Fetching messages from Supabase...');
+      
+      // First try direct fetch as a test
+      try {
+        console.log('Testing raw fetch to Supabase');
+        const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
+          headers: {
+            'apikey': SUPABASE_API_KEY,
+            'Authorization': `Bearer ${SUPABASE_API_KEY}`
+          }
+        });
+        
+        if (!response.ok) {
+          console.error('Raw fetch error, status:', response.status);
+          const errorText = await response.text();
+          console.error('Raw fetch error details:', errorText);
+        } else {
+          const rawData = await response.json();
+          console.log('Raw fetch successful, got', rawData.length, 'messages');
+        }
+      } catch (error) {
+        console.error('Raw fetch error:', error);
+      }
+      
+      // Now try with supabase client
+      const { data, error } = await supabase
+        .from('client_messages')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages with supabase client:', error);
+        console.error('Error details:', error.details, error.message, error.code);
+        toast.error(`Failed to load messages: ${error.message}`);
+        
+        // Fallback to fetch API as a last resort
+        try {
+          console.log('Trying fallback fetch method...');
+          const fallbackResponse = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+              'Prefer': 'return=representation'
+            }
+          });
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            console.log('Fallback fetch successful:', fallbackData);
+            
+            if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+              processAndSetMessages(fallbackData);
+              return;
+            }
+          } else {
+            console.error('Fallback fetch failed:', await fallbackResponse.text());
+          }
+        } catch (fallbackError) {
+          console.error('Fallback fetch error:', fallbackError);
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Messages retrieved successfully:', data);
+      processAndSetMessages(data || []);
+    } catch (error) {
+      console.error('Unexpected error fetching messages:', error);
+      toast.error('An unexpected error occurred while fetching messages');
+      setIsLoading(false);
+    }
+  };
+  
+  const processAndSetMessages = (data: any[]) => {
+    // Convert and validate the data before setting state
+    const validMessages = data.map(msg => {
+      // Ensure status is one of the allowed values
+      let validStatus: 'Baru' | 'Dihubungi' | 'Selesai';
+      
+      if (!['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
+        validStatus = 'Baru'; // Default status if invalid
+      } else {
+        validStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
+      }
+      
+      return {
+        ...msg,
+        status: validStatus,
+        // Ensure boolean type for starred
+        starred: Boolean(msg.starred)
+      } as ClientMessage;
+    });
+
+    setMessages(validMessages);
+    // After setting messages, fetch status counts
+    fetchStatusCounts();
+    setIsLoading(false);
+  };
+
+  // Filter messages based on search query and status filter
+  const filteredMessages = messages.filter(message => {
+    const matchesSearch = 
+      message.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.message.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'All' || message.status === statusFilter;
+    const matchesStarred = statusFilter === 'Starred' ? message.starred : true;
+    
+    return matchesSearch && matchesStatus && matchesStarred;
+  });
 
   return (
     <div className="space-y-6">
@@ -762,3 +882,11 @@ const AdminMessages = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminMessages;
