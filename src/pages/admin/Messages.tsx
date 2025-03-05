@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, X, Eye, Trash2, ChevronDown } from 'lucide-react';
+import { Search, X, Eye, Trash2, ChevronDown, Star, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
@@ -16,6 +16,11 @@ interface ClientMessage {
   date: string;
 }
 
+interface StatusCount {
+  status: string;
+  count: number;
+}
+
 const AdminMessages = () => {
   const [messages, setMessages] = useState<ClientMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,10 +28,37 @@ const AdminMessages = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedMessage, setSelectedMessage] = useState<ClientMessage | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
 
   useEffect(() => {
     fetchMessages();
+    fetchStatusCounts();
   }, []);
+
+  const fetchStatusCounts = async () => {
+    try {
+      // Simpler approach without using the function due to constraint issues
+      const statusList = ['Baru', 'Dihubungi', 'Selesai'];
+      const countsPromises = statusList.map(async (status) => {
+        const { data, error, count } = await supabase
+          .from('client_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', status);
+          
+        if (error) {
+          console.error(`Error counting ${status} messages:`, error);
+          return { status, count: 0 };
+        }
+        
+        return { status, count: count || 0 };
+      });
+      
+      const results = await Promise.all(countsPromises);
+      setStatusCounts(results);
+    } catch (error) {
+      console.error('Error fetching status counts:', error);
+    }
+  };
 
   const fetchMessages = async () => {
     setIsLoading(true);
@@ -115,6 +147,8 @@ const AdminMessages = () => {
       });
 
       setMessages(validMessages);
+      // After setting messages, refresh status counts
+      fetchStatusCounts();
     } catch (error) {
       console.error('Unexpected error fetching messages:', error);
       toast.error('An unexpected error occurred');
@@ -229,6 +263,9 @@ const AdminMessages = () => {
       }
       
       toast.success(`Status updated to ${newStatus}`);
+      
+      // Refresh status counts after updating
+      fetchStatusCounts();
     } catch (error) {
       console.error('Unexpected error updating message status:', error);
       toast.error('An unexpected error occurred');
@@ -255,6 +292,9 @@ const AdminMessages = () => {
         if (selectedMessage && selectedMessage.id === id) {
           handleCloseModal();
         }
+        
+        // Refresh status counts after deleting
+        fetchStatusCounts();
       } catch (error) {
         console.error('Unexpected error deleting message:', error);
         toast.error('An unexpected error occurred');
@@ -298,26 +338,102 @@ const AdminMessages = () => {
         <h1 className="text-2xl font-display font-bold text-gray-800 mb-4">Client Messages</h1>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search size={18} className="text-gray-400" />
-        </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search messages..."
-          className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+      {/* Status Dashboard */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {statusCounts.map((item) => (
+          <div 
+            key={item.status}
+            className={`p-4 rounded-lg shadow-sm flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${
+              statusFilter === item.status ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setStatusFilter(item.status)}
           >
-            <X size={18} />
+            <div className={`text-sm font-medium rounded-full px-3 py-1 mb-2 ${getStatusBadgeClass(item.status)}`}>
+              {item.status}
+            </div>
+            <div className="text-2xl font-bold">{item.count}</div>
+            <div className="text-xs text-gray-500 mt-1">messages</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter and Search */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search messages..."
+            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setStatusFilter('All')} 
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              statusFilter === 'All' 
+                ? 'bg-gray-200 text-gray-800' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Filter size={16} className="inline mr-1" />
+            All
           </button>
-        )}
+          <button 
+            onClick={() => setStatusFilter('Baru')} 
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              statusFilter === 'Baru' 
+                ? 'bg-blue-200 text-blue-800' 
+                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+            }`}
+          >
+            Baru
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Dihubungi')} 
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              statusFilter === 'Dihubungi' 
+                ? 'bg-yellow-200 text-yellow-800' 
+                : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
+            }`}
+          >
+            Dihubungi
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Selesai')} 
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              statusFilter === 'Selesai' 
+                ? 'bg-green-200 text-green-800' 
+                : 'bg-green-50 text-green-600 hover:bg-green-100'
+            }`}
+          >
+            Selesai
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Starred')} 
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              statusFilter === 'Starred' 
+                ? 'bg-amber-200 text-amber-800' 
+                : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+            }`}
+          >
+            <Star size={16} className="inline mr-1" />
+            Starred
+          </button>
+        </div>
       </div>
 
       {/* Messages Table */}
@@ -349,7 +465,8 @@ const AdminMessages = () => {
                     <td className="px-6 py-4 text-sm text-gray-800">
                       {formatDate(message.date)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-800">
+                    <td className="px-6 py-4 text-sm text-gray-800 flex items-center">
+                      {message.starred && <Star size={16} className="text-amber-500 mr-1 inline-block" />}
                       {message.name}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-800">
@@ -449,6 +566,17 @@ const AdminMessages = () => {
                         </div>
                         
                         <button
+                          onClick={() => handleToggleStarred(message.id)}
+                          className={`p-1 rounded-md ${
+                            message.starred 
+                            ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100 hover:text-amber-500'
+                          }`}
+                        >
+                          <Star size={18} className={message.starred ? 'fill-amber-500' : ''} />
+                        </button>
+                        
+                        <button
                           onClick={() => handleDeleteMessage(message.id)}
                           className="p-1 text-red-500 bg-red-50 rounded-md hover:bg-red-100"
                         >
@@ -478,12 +606,24 @@ const AdminMessages = () => {
                 <h3 className="text-lg font-bold text-gray-900">
                   Detail Pesan Klien
                 </h3>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleToggleStarred(selectedMessage.id)}
+                    className={`p-1 rounded-full ${
+                      selectedMessage.starred 
+                      ? 'text-amber-500' 
+                      : 'text-gray-400 hover:text-amber-500'
+                    }`}
+                  >
+                    <Star size={20} className={selectedMessage.starred ? 'fill-amber-500' : ''} />
+                  </button>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4 space-y-3">
@@ -528,17 +668,70 @@ const AdminMessages = () => {
                 <div className="flex">
                   <div className="w-1/4 text-gray-500">Status:</div>
                   <div className="w-3/4">
-                    <span 
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        selectedMessage.status === 'Dihubungi' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : selectedMessage.status === 'Baru'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {selectedMessage.status}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span 
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          selectedMessage.status === 'Dihubungi' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : selectedMessage.status === 'Baru'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {selectedMessage.status}
+                      </span>
+                      
+                      <div className="relative">
+                        <button
+                          className="text-gray-400 hover:text-gray-600"
+                          onClick={() => {
+                            const dropdown = document.getElementById('modal-status-dropdown');
+                            if (dropdown) {
+                              dropdown.classList.toggle('hidden');
+                            }
+                          }}
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+                        <div 
+                          id="modal-status-dropdown"
+                          className="hidden absolute left-0 mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                        >
+                          <div className="py-1">
+                            <button
+                              className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              onClick={() => {
+                                handleUpdateStatus(selectedMessage.id, 'Baru');
+                                const dropdown = document.getElementById('modal-status-dropdown');
+                                if (dropdown) dropdown.classList.add('hidden');
+                              }}
+                            >
+                              Baru
+                            </button>
+                            <button
+                              className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              onClick={() => {
+                                handleUpdateStatus(selectedMessage.id, 'Dihubungi');
+                                const dropdown = document.getElementById('modal-status-dropdown');
+                                if (dropdown) dropdown.classList.add('hidden');
+                              }}
+                            >
+                              Dihubungi
+                            </button>
+                            <button
+                              className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              onClick={() => {
+                                handleUpdateStatus(selectedMessage.id, 'Selesai');
+                                const dropdown = document.getElementById('modal-status-dropdown');
+                                if (dropdown) dropdown.classList.add('hidden');
+                              }}
+                            >
+                              Selesai
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -550,12 +743,18 @@ const AdminMessages = () => {
                   </div>
                 </div>
                 
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-end gap-2">
+                  <button
+                    onClick={() => handleDeleteMessage(selectedMessage.id)}
+                    className="px-4 py-2 bg-red-500 text-white rounded font-medium hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
                   <button
                     onClick={handleCloseModal}
                     className="px-4 py-2 bg-black text-white rounded font-medium hover:bg-gray-800"
                   >
-                    Tutup
+                    Close
                   </button>
                 </div>
               </div>

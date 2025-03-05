@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,94 +19,93 @@ const ContactForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  
-  try {
-    console.log('Submitting form data:', formData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     
-    // Validate form data before submission
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      toast.error('Please fill in all required fields');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Prepare the data object for Supabase
-    const messageData = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || null,
-      subject: formData.subject,
-      message: formData.message,
-      status: 'Baru', // Use 'Baru' as the status value
-      starred: false,
-      date: new Date().toISOString(),
-    };
-    
-    console.log('Sending to Supabase:', messageData);
-    
-    // Try to insert using the raw client to bypass any client-side issues
-    const { data, error } = await supabase
-      .from('client_messages')
-      .insert(messageData);
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      console.error('Error details:', error.details, error.hint, error.message);
+    try {
+      console.log('Submitting form data:', formData);
       
-      // Try direct API method for debugging
-      try {
-        console.log('Attempting direct API call...');
-        const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_API_KEY,
-            'Authorization': `Bearer ${SUPABASE_API_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify(messageData)
-        });
+      // Validate form data before submission
+      if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+        toast.error('Please fill in all required fields');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare the data object for Supabase
+      const messageData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        subject: formData.subject,
+        message: formData.message,
+        status: 'Baru', // Use 'Baru' as the status value
+        starred: false,
+        date: new Date().toISOString(),
+      };
+      
+      console.log('Sending to Supabase:', messageData);
+      
+      // Try to insert using the raw client to bypass any client-side issues
+      const { data, error } = await supabase
+        .from('client_messages')
+        .insert(messageData);
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        console.error('Error details:', error.details, error.hint, error.message);
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Direct API call failed:', response.status, errorText);
+        // Try direct API method for debugging
+        try {
+          console.log('Attempting direct API call...');
+          const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(messageData)
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Direct API call failed:', response.status, errorText);
+            toast.error('There was an error sending your message. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
+          
+          console.log('Direct API call succeeded:', response.status);
+          // Continue to success flow if direct call worked
+        } catch (directError) {
+          console.error('Direct API call exception:', directError);
           toast.error('There was an error sending your message. Please try again.');
           setIsSubmitting(false);
           return;
         }
-        
-        console.log('Direct API call succeeded:', response.status);
-        // Continue to success flow if direct call worked
-      } catch (directError) {
-        console.error('Direct API call exception:', directError);
-        toast.error('There was an error sending your message. Please try again.');
-        setIsSubmitting(false);
-        return;
       }
+      
+      console.log('Form submitted successfully');
+      toast.success('Your message has been sent successfully!');
+      
+      // Reset form on success
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error('An unexpected error occurred. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    console.log('Form submitted successfully');
-    toast.success('Your message has been sent successfully!');
-    
-    // Reset form on success
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
-  } catch (error) {
-    console.error('Unexpected error:', error);
-    toast.error('An unexpected error occurred. Please try again later.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
   
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
