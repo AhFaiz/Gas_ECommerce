@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2, Mail, Reply, MessageSquareCheck } from 'lucide-react';
+import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2, Mail, Reply, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
@@ -308,7 +308,7 @@ const AdminMessages = () => {
     switch (status) {
       case 'Baru': return <Mail className="h-5 w-5 mr-3" />;
       case 'Dihubungi': return <Reply className="h-5 w-5 mr-3" />;
-      case 'Selesai': return <MessageSquareCheck className="h-5 w-5 mr-3" />;
+      case 'Selesai': return <MessageSquare className="h-5 w-5 mr-3" />;
       default: return <Mail className="h-5 w-5 mr-3" />;
     }
   };
@@ -406,7 +406,7 @@ const AdminMessages = () => {
                 statusFilter === 'Selesai' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
               }`}
             >
-              <MessageSquareCheck className="h-5 w-5 mr-3" />
+              <MessageSquare className="h-5 w-5 mr-3" />
               Selesai
               <span className="ml-auto bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
                 {messages.filter(m => m.status === 'Selesai').length}
