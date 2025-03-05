@@ -1,4 +1,3 @@
-<lov-code>
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -762,3 +761,4 @@ const AdminMessages = () => {
                   </button>
                 </div>
               </div>
+            </div>
