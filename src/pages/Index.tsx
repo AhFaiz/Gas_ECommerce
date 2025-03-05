@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, ShieldCheck, Truck, Clock, Award, Search } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Truck, Clock, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import Hero from '../components/Hero';
@@ -68,8 +68,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-      
-      {/* Categories Section dan Featured Products Section telah dihapus */}
       
       {/* CTA Section */}
       <section className="py-20 relative overflow-hidden">
