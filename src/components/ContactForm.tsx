@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,11 +46,10 @@ const ContactForm = () => {
       
       console.log('Sending to Supabase:', messageData);
       
-      // Enable debug mode to log the full request
-      const { data, error } = await supabase
+      // Use a simplified insert without .select() to minimize RLS issues
+      const { error } = await supabase
         .from('client_messages')
-        .insert(messageData)
-        .select();
+        .insert(messageData);
       
       if (error) {
         console.error('Supabase error:', error);
@@ -61,7 +59,7 @@ const ContactForm = () => {
         return;
       }
       
-      console.log('Form submitted successfully, response:', data);
+      console.log('Form submitted successfully');
       toast.success('Your message has been sent successfully!');
       
       // Reset form on success
