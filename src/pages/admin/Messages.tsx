@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2, Mail, Reply, MessageSquare } from 'lucide-react';
+import { Search, X, Eye, Trash2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
@@ -261,318 +262,234 @@ const AdminMessages = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Baru': return <Mail className="h-5 w-5 mr-3" />;
-      case 'Dihubungi': return <Reply className="h-5 w-5 mr-3" />;
-      case 'Selesai': return <MessageSquare className="h-5 w-5 mr-3" />;
-      default: return <Mail className="h-5 w-5 mr-3" />;
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('id-ID', { 
       year: 'numeric', 
-      month: 'long', 
+      month: 'numeric', 
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
-  const getRelativeTime = (dateString: string) => {
-    const now = new Date();
+  const formatFullDate = (dateString: string) => {
     const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffSecs = Math.floor(diffMs / 1000);
-    const diffMins = Math.floor(diffSecs / 60);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (diffSecs < 60) return 'just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
-    return formatDate(dateString);
+    return date.toLocaleDateString('id-ID', { 
+      year: 'numeric', 
+      month: 'numeric', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
-  const totalBaru = messages.filter(message => message.status === 'Baru').length;
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-gray-800">Client Messages</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage and respond to customer inquiries
-          {totalBaru > 0 && (
-            <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
-              {totalBaru} baru
-            </span>
-          )}
-        </p>
+        <h1 className="text-2xl font-display font-bold text-gray-800 mb-4">Client Messages</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Sidebar */}
-        <div className="md:col-span-3">
-          <div className="bg-white rounded-xl shadow-sm p-4">
-            <button
-              onClick={() => setStatusFilter('All')}
-              className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'All' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
-              }`}
-            >
-              <Inbox className="h-5 w-5 mr-3" />
-              All Messages
-              <span className="ml-auto bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.length}
-              </span>
-            </button>
-            
-            <button
-              onClick={() => setStatusFilter('Baru')}
-              className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'Baru' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
-              }`}
-            >
-              <Mail className="h-5 w-5 mr-3" />
-              Baru
-              <span className="ml-auto bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.status === 'Baru').length}
-              </span>
-            </button>
-            
-            <button
-              onClick={() => setStatusFilter('Dihubungi')}
-              className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'Dihubungi' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
-              }`}
-            >
-              <Reply className="h-5 w-5 mr-3" />
-              Dihubungi
-              <span className="ml-auto bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.status === 'Dihubungi').length}
-              </span>
-            </button>
-            
-            <button
-              onClick={() => setStatusFilter('Selesai')}
-              className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'Selesai' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
-              }`}
-            >
-              <MessageSquare className="h-5 w-5 mr-3" />
-              Selesai
-              <span className="ml-auto bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.status === 'Selesai').length}
-              </span>
-            </button>
-            
-            <button
-              onClick={() => setStatusFilter('Starred')}
-              className={`flex items-center w-full px-3 py-2 rounded-md text-sm ${
-                statusFilter === 'Starred' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
-              }`}
-            >
-              <Star className="h-5 w-5 mr-3" />
-              Starred
-              <span className="ml-auto bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.starred).length}
-              </span>
-            </button>
-          </div>
+      {/* Search */}
+      <div className="relative mb-4">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search size={18} className="text-gray-400" />
         </div>
-        
-        {/* Messages */}
-        <div className="md:col-span-9">
-          {/* Search */}
-          <div className="relative mb-4">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search messages..."
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <X size={18} />
-              </button>
-            )}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search messages..."
+          className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Messages Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">Loading messages...</p>
           </div>
-          
-          {/* Messages List */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            {isLoading ? (
-              <div className="text-center py-10">
-                <p className="text-gray-500">Loading messages...</p>
-              </div>
-            ) : filteredMessages.length === 0 ? (
-              <div className="text-center py-10">
-                <p className="text-gray-500">No messages found matching your criteria.</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-200">
+        ) : filteredMessages.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">No messages found matching your criteria.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-left">
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Tanggal</th>
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Nama</th>
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Email</th>
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Telepon</th>
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Status</th>
+                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
                 {filteredMessages.map((message) => (
-                  <li 
-                    key={message.id} 
-                    className={`hover:bg-gray-50 transition-colors cursor-pointer relative ${
-                      message.status === 'Baru' ? 'bg-blue-50/30' : ''
-                    }`}
-                  >
-                    <div 
-                      className="px-6 py-4"
-                      onClick={() => handleViewMessageDetails(message)}
-                    >
-                      <div className="flex justify-between">
-                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 flex items-center">
-                          {message.status === 'Baru' && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-                          )}
-                          {message.name}
-                        </h3>
-                        <span className="text-xs text-gray-500">{getRelativeTime(message.date)}</span>
-                      </div>
-                      
-                      <p className="text-sm font-medium text-gray-800 mt-1">
-                        {message.subject}
-                        <span 
-                          className={`ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(message.status)}`}
+                  <tr key={message.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {formatDate(message.date)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {message.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {message.email}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {message.phone || '-'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span 
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          message.status === 'Dihubungi' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : message.status === 'Baru'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {message.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewMessageDetails(message)}
+                          className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
                         >
-                          {message.status}
-                        </span>
-                      </p>
-                      
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {message.message}
-                      </p>
-                    </div>
-                    
-                    <div className="absolute top-4 right-4 flex space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleStarred(message.id);
-                        }}
-                        className={`p-1 rounded-full ${message.starred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
-                      >
-                        <Star size={16} className={message.starred ? 'fill-yellow-500' : ''} />
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMessage(message.id);
-                        }}
-                        className="p-1 rounded-full text-gray-400 hover:text-red-500"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </li>
+                          Lihat
+                        </button>
+                        
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={() => handleUpdateStatus(message.id, 'Dihubungi')}
+                            className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center"
+                          >
+                            <span>Dihubungi</span>
+                            <ChevronDown className="h-4 w-4 ml-1" />
+                          </button>
+                        </div>
+                        
+                        <button
+                          onClick={() => handleDeleteMessage(message.id)}
+                          className="p-1 text-red-500 bg-red-50 rounded-md hover:bg-red-100"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Message Details Modal */}
       {isDetailsModalOpen && selectedMessage && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="flex items-center justify-center min-h-screen px-4 text-center">
             <div 
-              className="fixed inset-0 transition-opacity" 
-              aria-hidden="true"
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" 
               onClick={handleCloseModal}
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
+            ></div>
 
-            <div 
-              className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
-            >
-              <div className="flex justify-between items-center bg-gray-50 px-6 py-4 border-b">
-                <div className="flex items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedMessage.subject}
-                  </h3>
-                  <span 
-                    className={`ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(selectedMessage.status)}`}
-                  >
-                    {selectedMessage.status}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <button
-                    onClick={() => handleToggleStarred(selectedMessage.id)}
-                    className={`mr-3 ${selectedMessage.starred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
-                  >
-                    <Star size={18} className={selectedMessage.starred ? 'fill-yellow-500' : ''} />
-                  </button>
-                  <button
-                    onClick={handleCloseModal}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
+            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Detail Pesan Klien
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{selectedMessage.name}</h4>
-                    <p className="text-sm text-gray-500">{selectedMessage.email}</p>
-                    {selectedMessage.phone && (
-                      <p className="text-sm text-gray-500">{selectedMessage.phone}</p>
+
+              <div className="mt-4 space-y-3">
+                <div className="flex">
+                  <div className="w-1/4 text-gray-500">Nama:</div>
+                  <div className="w-3/4 font-medium">{selectedMessage.name}</div>
+                </div>
+                
+                <div className="flex">
+                  <div className="w-1/4 text-gray-500">Email:</div>
+                  <div className="w-3/4 font-medium flex items-center">
+                    <span className="text-blue-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {selectedMessage.email}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex">
+                  <div className="w-1/4 text-gray-500">Telepon:</div>
+                  <div className="w-3/4 font-medium flex items-center">
+                    {selectedMessage.phone ? (
+                      <span className="text-blue-600 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        {selectedMessage.phone}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500">{formatDate(selectedMessage.date)}</p>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-md mb-6">
-                  <p className="text-gray-800 whitespace-pre-line">{selectedMessage.message}</p>
+                <div className="flex">
+                  <div className="w-1/4 text-gray-500">Tanggal:</div>
+                  <div className="w-3/4 font-medium">{formatFullDate(selectedMessage.date)}</div>
                 </div>
                 
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Status</h4>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Baru')}
-                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Baru' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-blue-50'}`}
-                      >
-                        Baru
-                      </button>
-                      <button 
-                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Dihubungi')}
-                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Dihubungi' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-yellow-50'}`}
-                      >
-                        Dihubungi
-                      </button>
-                      <button 
-                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Selesai')}
-                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Selesai' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-green-50'}`}
-                      >
-                        Selesai
-                      </button>
-                    </div>
+                <div className="flex">
+                  <div className="w-1/4 text-gray-500">Status:</div>
+                  <div className="w-3/4">
+                    <span 
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        selectedMessage.status === 'Dihubungi' 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : selectedMessage.status === 'Baru'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-green-100 text-green-800'
+                      }`}
+                    >
+                      {selectedMessage.status}
+                    </span>
                   </div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-500">Pesan:</div>
+                  <div className="mt-1 p-3 bg-gray-50 rounded-md text-gray-800">
+                    {selectedMessage.subject && <div className="font-medium mb-2">{selectedMessage.subject}</div>}
+                    <div className="whitespace-pre-line">{selectedMessage.message}</div>
+                  </div>
+                </div>
+                
+                <div className="pt-4 flex justify-end">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 bg-black text-white rounded font-medium hover:bg-gray-800"
+                  >
+                    Tutup
+                  </button>
                 </div>
               </div>
             </div>
