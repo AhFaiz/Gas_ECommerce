@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -761,4 +761,32 @@ const AdminMessages = () => {
                 
                 <div>
                   <div className="text-gray-500">Pesan:</div>
-                  <div
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">
+                    {selectedMessage.message}
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2 mt-4">
+                  <button
+                    onClick={() => handleDeleteMessage(selectedMessage.id)}
+                    className="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-md text-sm font-medium hover:bg-red-100"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminMessages;
