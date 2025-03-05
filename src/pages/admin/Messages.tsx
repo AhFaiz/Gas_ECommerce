@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2 } from 'lucide-react';
+import { Search, X, Eye, Inbox, CheckCircle, Star, Trash2, Mail, Reply, MessageSquareCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
@@ -10,7 +10,7 @@ interface ClientMessage {
   phone: string | null;
   subject: string;
   message: string;
-  status: 'Unread' | 'Read' | 'Replied';
+  status: 'Baru' | 'Dihubungi' | 'Selesai';
   starred: boolean;
   date: string;
 }
@@ -65,9 +65,9 @@ const AdminMessages = () => {
           
           // Process the data the same way as the Supabase client version
           const validMessages = (directData || []).map((msg: any) => {
-            const validStatus = ['Unread', 'Read', 'Replied'].includes(msg.status || '') 
-              ? (msg.status as 'Unread' | 'Read' | 'Replied') 
-              : 'Unread';
+            const validStatus = ['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '') 
+              ? (msg.status as 'Baru' | 'Dihubungi' | 'Selesai') 
+              : 'Baru';
             
             return {
               ...msg,
@@ -91,14 +91,24 @@ const AdminMessages = () => {
       
       // Convert and validate the status field before setting state
       const validMessages = (data || []).map(msg => {
-        // Ensure status is one of the allowed values, default to 'Unread' if not
-        const validStatus = ['Unread', 'Read', 'Replied'].includes(msg.status || '') 
-          ? (msg.status as 'Unread' | 'Read' | 'Replied') 
-          : 'Unread';
+        // Convert old statuses to new ones
+        let newStatus: 'Baru' | 'Dihubungi' | 'Selesai';
+        
+        if (msg.status === 'Unread') {
+          newStatus = 'Baru';
+        } else if (msg.status === 'Read') {
+          newStatus = 'Baru'; // Keep as Baru for now
+        } else if (msg.status === 'Replied') {
+          newStatus = 'Dihubungi';
+        } else if (['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
+          newStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
+        } else {
+          newStatus = 'Baru'; // Default
+        }
         
         return {
           ...msg,
-          status: validStatus,
+          status: newStatus,
           // Ensure boolean type for starred
           starred: Boolean(msg.starred)
         } as ClientMessage;
@@ -128,23 +138,16 @@ const AdminMessages = () => {
   });
 
   const handleViewMessageDetails = async (message: ClientMessage) => {
-    // Mark as read when opening if it's unread
-    if (message.status === 'Unread') {
+    // Mark as read when opening if it's "Baru"
+    if (message.status === 'Baru') {
       try {
         const { error } = await supabase
           .from('client_messages')
-          .update({ status: 'Read' })
+          .update({ status: 'Baru' }) // Keep status as Baru but mark as read
           .eq('id', message.id);
           
         if (error) {
           console.error('Error updating message status:', error);
-        } else {
-          // Update local state
-          const updatedMessages = messages.map(m => 
-            m.id === message.id ? { ...m, status: 'Read' as const } : m
-          );
-          setMessages(updatedMessages);
-          message = { ...message, status: 'Read' };
         }
       } catch (error) {
         console.error('Unexpected error updating message status:', error);
@@ -194,6 +197,36 @@ const AdminMessages = () => {
     }
   };
 
+  const handleUpdateStatus = async (id: string, newStatus: 'Baru' | 'Dihubungi' | 'Selesai') => {
+    try {
+      const { error } = await supabase
+        .from('client_messages')
+        .update({ status: newStatus })
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error updating message status:', error);
+        toast.error('Failed to update message status');
+        return;
+      }
+      
+      // Update local state
+      const updatedMessages = messages.map(message => 
+        message.id === id ? { ...message, status: newStatus } : message
+      );
+      setMessages(updatedMessages);
+      
+      if (selectedMessage && selectedMessage.id === id) {
+        setSelectedMessage({ ...selectedMessage, status: newStatus });
+      }
+      
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Unexpected error updating message status:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
+
   const handleDeleteMessage = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
       try {
@@ -234,7 +267,7 @@ const AdminMessages = () => {
     try {
       const { error } = await supabase
         .from('client_messages')
-        .update({ status: 'Replied' })
+        .update({ status: 'Dihubungi' })
         .eq('id', selectedMessage.id);
         
       if (error) {
@@ -245,11 +278,11 @@ const AdminMessages = () => {
       
       // Update local state
       const updatedMessages = messages.map(message => 
-        message.id === selectedMessage.id ? { ...message, status: 'Replied' as const } : message
+        message.id === selectedMessage.id ? { ...message, status: 'Dihubungi' as const } : message
       );
       
       setMessages(updatedMessages);
-      setSelectedMessage({ ...selectedMessage, status: 'Replied' });
+      setSelectedMessage({ ...selectedMessage, status: 'Dihubungi' });
       
       // In a real app, this would send the reply to the customer
       console.log(`Reply to ${selectedMessage.email}:`, replyText);
@@ -264,10 +297,19 @@ const AdminMessages = () => {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'Unread': return 'bg-blue-100 text-blue-800';
-      case 'Read': return 'bg-gray-100 text-gray-800';
-      case 'Replied': return 'bg-green-100 text-green-800';
+      case 'Baru': return 'bg-blue-100 text-blue-800';
+      case 'Dihubungi': return 'bg-yellow-100 text-yellow-800';
+      case 'Selesai': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Baru': return <Mail className="h-5 w-5 mr-3" />;
+      case 'Dihubungi': return <Reply className="h-5 w-5 mr-3" />;
+      case 'Selesai': return <MessageSquareCheck className="h-5 w-5 mr-3" />;
+      default: return <Mail className="h-5 w-5 mr-3" />;
     }
   };
 
@@ -299,7 +341,7 @@ const AdminMessages = () => {
     return formatDate(dateString);
   };
 
-  const totalUnread = messages.filter(message => message.status === 'Unread').length;
+  const totalBaru = messages.filter(message => message.status === 'Baru').length;
 
   return (
     <div className="space-y-8">
@@ -307,9 +349,9 @@ const AdminMessages = () => {
         <h1 className="text-2xl font-display font-bold text-gray-800">Client Messages</h1>
         <p className="text-sm text-gray-500 mt-1">
           Manage and respond to customer inquiries
-          {totalUnread > 0 && (
+          {totalBaru > 0 && (
             <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
-              {totalUnread} unread
+              {totalBaru} baru
             </span>
           )}
         </p>
@@ -333,30 +375,41 @@ const AdminMessages = () => {
             </button>
             
             <button
-              onClick={() => setStatusFilter('Unread')}
+              onClick={() => setStatusFilter('Baru')}
               className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'Unread' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
+                statusFilter === 'Baru' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
               }`}
             >
-              <div className="h-5 w-5 mr-3 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-              </div>
-              Unread
+              <Mail className="h-5 w-5 mr-3" />
+              Baru
               <span className="ml-auto bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.status === 'Unread').length}
+                {messages.filter(m => m.status === 'Baru').length}
               </span>
             </button>
             
             <button
-              onClick={() => setStatusFilter('Replied')}
+              onClick={() => setStatusFilter('Dihubungi')}
               className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
-                statusFilter === 'Replied' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
+                statusFilter === 'Dihubungi' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
               }`}
             >
-              <CheckCircle className="h-5 w-5 mr-3" />
-              Replied
+              <Reply className="h-5 w-5 mr-3" />
+              Dihubungi
+              <span className="ml-auto bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs">
+                {messages.filter(m => m.status === 'Dihubungi').length}
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setStatusFilter('Selesai')}
+              className={`flex items-center w-full px-3 py-2 rounded-md text-sm mb-1 ${
+                statusFilter === 'Selesai' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-100'
+              }`}
+            >
+              <MessageSquareCheck className="h-5 w-5 mr-3" />
+              Selesai
               <span className="ml-auto bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
-                {messages.filter(m => m.status === 'Replied').length}
+                {messages.filter(m => m.status === 'Selesai').length}
               </span>
             </button>
             
@@ -415,7 +468,7 @@ const AdminMessages = () => {
                   <li 
                     key={message.id} 
                     className={`hover:bg-gray-50 transition-colors cursor-pointer relative ${
-                      message.status === 'Unread' ? 'bg-blue-50/30' : ''
+                      message.status === 'Baru' ? 'bg-blue-50/30' : ''
                     }`}
                   >
                     <div 
@@ -424,7 +477,7 @@ const AdminMessages = () => {
                     >
                       <div className="flex justify-between">
                         <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 flex items-center">
-                          {message.status === 'Unread' && (
+                          {message.status === 'Baru' && (
                             <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
                           )}
                           {message.name}
@@ -534,6 +587,36 @@ const AdminMessages = () => {
                 </div>
                 
                 <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">Status</h4>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Baru')}
+                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Baru' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-800 hover:bg-blue-50'}`}
+                      >
+                        Baru
+                      </button>
+                      <button 
+                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Dihubungi')}
+                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Dihubungi' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : 'bg-gray-100 text-gray-800 hover:bg-yellow-50'}`}
+                      >
+                        Dihubungi
+                      </button>
+                      <button 
+                        onClick={() => handleUpdateStatus(selectedMessage.id, 'Selesai')}
+                        className={`px-3 py-1 text-xs rounded-full ${selectedMessage.status === 'Selesai' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800 hover:bg-green-50'}`}
+                      >
+                        Selesai
+                      </button>
+                    </div>
+                  </div>
+                  
                   <h4 className="font-medium text-gray-900 mb-2">Reply</h4>
                   <form onSubmit={handleReplySubmit}>
                     <textarea

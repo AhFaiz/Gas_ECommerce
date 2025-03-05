@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,7 +40,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       phone: formData.phone || null,
       subject: formData.subject,
       message: formData.message,
-      status: 'Unread',
+      status: 'Baru', // Changed from 'Unread' to 'Baru'
       starred: false,
       date: new Date().toISOString(),
     };
