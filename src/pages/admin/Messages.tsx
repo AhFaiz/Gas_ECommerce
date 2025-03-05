@@ -32,6 +32,7 @@ const AdminMessages = () => {
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching messages from Supabase...');
       const { data, error } = await supabase
         .from('client_messages')
         .select('*')
@@ -43,6 +44,8 @@ const AdminMessages = () => {
         return;
       }
 
+      console.log('Messages retrieved successfully:', data);
+      
       // Convert and validate the status field before setting state
       const validMessages = (data || []).map(msg => {
         // Ensure status is one of the allowed values, default to 'Unread' if not

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,48 +46,16 @@ const ContactForm = () => {
       
       console.log('Sending to Supabase:', messageData);
       
-      // Use RPC to bypass RLS if direct insert is failing
-      const { data, error } = await supabase
+      // Insert data into Supabase - using the RLS policy we created
+      const { error } = await supabase
         .from('client_messages')
-        .insert(messageData)
-        .select();
+        .insert(messageData);
       
       if (error) {
         console.error('Supabase error:', error);
-        console.error('Error details:', error.details, error.hint, error.message);
-        
-        // Try an alternative approach using the rawFetch method
-        if (error.message.includes('row-level security policy')) {
-          console.log('Attempting alternative submission method...');
-          try {
-            const rawResponse = await supabase.auth.getSession();
-            console.log('Current session:', rawResponse);
-            
-            // Try direct API call with raw fetch
-            const { error: fetchError } = await supabase
-              .from('client_messages')
-              .insert(messageData);
-              
-            if (fetchError) {
-              console.error('Alternative method also failed:', fetchError);
-              toast.error('There was an error sending your message. Please try again.');
-              setIsSubmitting(false);
-              return;
-            } else {
-              console.log('Alternative method successful');
-              // Continue to success flow
-            }
-          } catch (altError) {
-            console.error('Alternative approach error:', altError);
-            toast.error('There was an error sending your message. Please try again.');
-            setIsSubmitting(false);
-            return;
-          }
-        } else {
-          toast.error('There was an error sending your message. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
+        toast.error('There was an error sending your message. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
       
       console.log('Form submitted successfully');
