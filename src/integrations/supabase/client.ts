@@ -10,6 +10,13 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const SUPABASE_API_URL = SUPABASE_URL;
 export const SUPABASE_API_KEY = SUPABASE_PUBLISHABLE_KEY;
 
+// Initialize custom headers with admin auth if applicable
+const initialHeaders = {
+  'x-app-version': '1.0.0',
+  // Add admin header directly during client creation if needed
+  'x-admin-auth': localStorage.getItem('adminAuthenticated') === 'true' ? 'true' : undefined,
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
@@ -17,11 +24,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'admin-auth-storage-key', // Gunakan storage key khusus untuk admin
   },
   global: {
-    headers: {
-      'x-app-version': '1.0.0',
-      // Add admin header directly during client creation if needed
-      'x-admin-auth': localStorage.getItem('adminAuthenticated') === 'true' ? 'true' : undefined,
-    },
+    headers: initialHeaders,
   },
   db: {
     schema: 'public',
@@ -38,14 +41,11 @@ export const setAdminMode = () => {
   if (localStorage.getItem('adminAuthenticated') === 'true') {
     console.log('Setting admin mode for Supabase client');
     
-    // Instead of trying to access protected properties or methods,
-    // we'll make direct fetch calls with admin headers when needed
-    console.log('Admin mode active - queries will include admin headers');
-    
-    // Refresh the auth state to ensure queries have the latest auth context
+    // Instead of modifying the client directly, we'll just refresh the session
+    // The admin header is already set during client creation
     supabase.auth.refreshSession();
     
-    console.log('Admin mode set successfully');
+    console.log('Admin mode active - RLS policies will check for x-admin-auth header');
   }
 };
 
