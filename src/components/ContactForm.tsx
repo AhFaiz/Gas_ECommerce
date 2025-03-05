@@ -24,28 +24,44 @@ const ContactForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Save to Supabase
+      console.log('Submitting form data:', formData);
+      
+      // Validate form data before submission
+      if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+        toast.error('Please fill in all required fields');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare the data object with explicit type casting
+      const messageData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        subject: formData.subject,
+        message: formData.message,
+        status: 'Unread' as 'Unread' | 'Read' | 'Replied',
+        starred: false,
+        date: new Date().toISOString(),
+      };
+      
+      console.log('Prepared message data:', messageData);
+      
+      // Save to Supabase with detailed error logging
       const { data, error } = await supabase
         .from('client_messages')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          subject: formData.subject,
-          message: formData.message,
-          status: 'Unread', // Explicitly set as string literal to match expected type
-          starred: false,
-          date: new Date().toISOString(),
-        });
+        .insert(messageData);
       
       if (error) {
         console.error('Error submitting form:', error);
+        console.error('Error details:', error.details, error.hint, error.message);
+        
         toast.error('There was an error sending your message. Please try again.');
         setIsSubmitting(false);
         return;
       }
       
-      console.log('Form submitted:', formData);
+      console.log('Form submitted successfully:', data);
       toast.success('Your message has been sent successfully!');
       
       // Reset form
