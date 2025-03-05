@@ -19,6 +19,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   global: {
     headers: {
       'x-app-version': '1.0.0',
+      // Add admin header directly during client creation if needed
+      'x-admin-auth': localStorage.getItem('adminAuthenticated') === 'true' ? 'true' : undefined,
     },
   },
   db: {
@@ -36,16 +38,12 @@ export const setAdminMode = () => {
   if (localStorage.getItem('adminAuthenticated') === 'true') {
     console.log('Setting admin mode for Supabase client');
     
-    // Instead of trying to modify protected properties directly,
-    // we'll create custom headers for our requests that will identify admin requests
-    supabase.functions.setAuth(SUPABASE_PUBLISHABLE_KEY);
+    // Instead of trying to access protected properties or methods,
+    // we'll make direct fetch calls with admin headers when needed
+    console.log('Admin mode active - queries will include admin headers');
     
-    // Update the global headers to include admin authentication marker
-    const currentHeaders = supabase.rest.headers;
-    supabase.rest.setHeaders({
-      ...currentHeaders,
-      'x-admin-auth': 'true', // This is a custom header that our RLS policies can check for
-    });
+    // Refresh the auth state to ensure queries have the latest auth context
+    supabase.auth.refreshSession();
     
     console.log('Admin mode set successfully');
   }
@@ -62,6 +60,8 @@ export const rawFetch = async (url: string, options: RequestInit = {}) => {
         ...(options.headers || {}),
         'apikey': SUPABASE_PUBLISHABLE_KEY,
         'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        // Add admin header for bypassing RLS if authenticated as admin
+        'x-admin-auth': localStorage.getItem('adminAuthenticated') === 'true' ? 'true' : undefined,
       },
     });
     

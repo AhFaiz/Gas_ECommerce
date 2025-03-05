@@ -32,19 +32,8 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
       // Set up service role access for admin
       const setupDevAuth = async () => {
         try {
-          // This will let Supabase client bypass RLS in dev mode
-          supabase.auth.setSession({
-            access_token: "dummy-access-token-for-dev",
-            refresh_token: "dummy-refresh-token-for-dev"
-          });
-          
-          // Set admin mode to ensure proper access
+          // Apply admin mode flag for subsequent requests
           setAdminMode();
-          
-          // Observe auth state changes for debugging
-          supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event, session);
-          });
           
           // Execute a test query to ensure DB connection
           const { data, error } = await supabase
