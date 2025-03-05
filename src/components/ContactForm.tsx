@@ -47,8 +47,8 @@ const ContactForm = () => {
       
       console.log('Sending to Supabase:', messageData);
       
-      // Direct insert without .select() to avoid RLS issues
-      const { error } = await supabase
+      // Insert data without using .select() to avoid potential RLS issues
+      const { data, error } = await supabase
         .from('client_messages')
         .insert(messageData);
       

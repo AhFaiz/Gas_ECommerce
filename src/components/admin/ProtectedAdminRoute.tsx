@@ -25,31 +25,24 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
     if (process.env.NODE_ENV === 'development' && !isAuthenticated) {
       console.log('Development mode - Auto authenticating for testing');
       
-      // Auto-authenticate
+      // Auto-authenticate for admin dashboards
       localStorage.setItem('adminAuthenticated', 'true');
       localStorage.setItem('adminUsername', 'admin123');
       
       // Set a Supabase session for the admin user
       const adminLogin = async () => {
         try {
-          // Try to sign in as a special admin user to bypass RLS
-          // This is only for development purposes
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: 'admin@example.com',
-            password: 'admin123'
-          });
+          console.log('Creating anonymous session for development');
+          // Create an anonymous session to bypass RLS in development
+          const { data, error } = await supabase.auth.signInAnonymously();
           
           if (error) {
-            console.log('Unable to auto-login with Supabase, creating anonymous session instead');
-            // If no admin user exists, create an anonymous session
-            await supabase.auth.signInAnonymously();
+            console.error('Unable to create anonymous session:', error);
           } else {
-            console.log('Auto-logged in with Supabase auth:', data);
+            console.log('Created anonymous session successfully:', data);
           }
         } catch (err) {
           console.error('Error during auto-authentication:', err);
-          // Fallback to anonymous session
-          await supabase.auth.signInAnonymously();
         }
       };
       

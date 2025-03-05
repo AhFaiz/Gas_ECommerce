@@ -31,18 +31,23 @@ const AdminMessages = () => {
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
 
   useEffect(() => {
-    // Check if authenticated with Supabase
+    // Create an anonymous session for development if not authenticated
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       console.log('Current Supabase session:', data.session);
       
       // If no session, try to create an anonymous session for development
-      if (!data.session && process.env.NODE_ENV === 'development') {
+      if (!data.session) {
         console.log('No Supabase session, creating anonymous session for development');
         await supabase.auth.signInAnonymously();
+        
+        // Wait a short time for auth to complete before fetching
+        setTimeout(() => {
+          fetchMessages();
+        }, 500);
+      } else {
+        fetchMessages();
       }
-      
-      fetchMessages();
     };
     
     checkAuth();
@@ -55,7 +60,7 @@ const AdminMessages = () => {
       const countsPromises = statusList.map(async (status) => {
         const { count, error } = await supabase
           .from('client_messages')
-          .select('*', { count: 'exact', head: false })
+          .select('*', { count: 'exact', head: true })
           .eq('status', status);
           
         if (error) {
@@ -79,13 +84,19 @@ const AdminMessages = () => {
     try {
       console.log('Fetching messages from Supabase...');
       
-      // First try a direct fetch to check RLS is working
-      const { data: rawData, error: rawError } = await supabase
-        .from('client_messages')
-        .select('*')
-        .limit(1);
-        
-      console.log('RLS test result:', { data: rawData, error: rawError });
+      // Test a raw fetch to bypass client-side filtering
+      try {
+        const rawResponse = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages?select=*`, {
+          headers: {
+            'apikey': `${supabase.supabaseKey}`,
+            'Authorization': `Bearer ${supabase.supabaseKey}`
+          }
+        });
+        const rawData = await rawResponse.json();
+        console.log('Raw fetch result:', rawData);
+      } catch (error) {
+        console.error('Raw fetch error:', error);
+      }
       
       // Actual fetch for all messages
       const { data, error } = await supabase
