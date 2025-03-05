@@ -67,14 +67,6 @@ const AdminDashboard = () => {
     },
   ];
 
-  const recentOrders = [
-    { id: 'ORD-001', customer: 'John Doe', product: 'Household LPG Cylinder', total: '$45.99', status: 'Delivered' },
-    { id: 'ORD-002', customer: 'Jane Smith', product: 'Industrial Gas Tank', total: '$129.99', status: 'Processing' },
-    { id: 'ORD-003', customer: 'Robert Johnson', product: 'Camping Gas Canister', total: '$19.95', status: 'Shipped' },
-    { id: 'ORD-004', customer: 'Emily Davis', product: 'Commercial Gas Regulator', total: '$78.50', status: 'Pending' },
-    { id: 'ORD-005', customer: 'Michael Wilson', product: 'High-Pressure Cylinder', total: '$189.95', status: 'Delivered' },
-  ];
-
   return (
     <div className="space-y-8">
       {/* Welcome Section with Clock */}
@@ -119,66 +111,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Recent Orders */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200">
-          <h2 className="font-semibold text-lg text-gray-800">Recent Orders</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                    {order.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {order.customer}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {order.product}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                    {order.total}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span 
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : ''}
-                        ${order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' : ''}
-                        ${order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' : ''}
-                        ${order.status === 'Pending' ? 'bg-gray-100 text-gray-800' : ''}
-                      `}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
