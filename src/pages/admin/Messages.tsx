@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Eye, Trash2, ChevronDown, Star, Filter } from 'lucide-react';
+import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
@@ -319,7 +319,8 @@ const AdminMessages = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-gray-800 mb-4">Client Messages</h1>
+        <h1 className="text-2xl font-display font-bold text-gray-800 mb-2">Client Messages</h1>
+        <p className="text-gray-500">Manage all client inquiries and messages</p>
       </div>
 
       {/* Status Dashboard */}
@@ -342,8 +343,8 @@ const AdminMessages = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className="relative w-full md:w-auto md:flex-1 max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={18} className="text-gray-400" />
           </div>
@@ -364,7 +365,15 @@ const AdminMessages = () => {
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => fetchMessages()}
+            className="px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 hover:bg-gray-50 flex items-center gap-1"
+          >
+            <RefreshCw size={14} />
+            Refresh
+          </button>
+          
           <button 
             onClick={() => setStatusFilter('All')} 
             className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -373,39 +382,43 @@ const AdminMessages = () => {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            <Filter size={16} className="inline mr-1" />
+            <Filter size={14} className="inline mr-1" />
             All
           </button>
-          <button 
-            onClick={() => setStatusFilter('Baru')} 
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              statusFilter === 'Baru' 
-                ? 'bg-blue-200 text-blue-800' 
-                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-            }`}
-          >
-            Baru
-          </button>
-          <button 
-            onClick={() => setStatusFilter('Dihubungi')} 
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              statusFilter === 'Dihubungi' 
-                ? 'bg-yellow-200 text-yellow-800' 
-                : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
-            }`}
-          >
-            Dihubungi
-          </button>
-          <button 
-            onClick={() => setStatusFilter('Selesai')} 
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              statusFilter === 'Selesai' 
-                ? 'bg-green-200 text-green-800' 
-                : 'bg-green-50 text-green-600 hover:bg-green-100'
-            }`}
-          >
-            Selesai
-          </button>
+          
+          <div className="flex gap-1">
+            <button 
+              onClick={() => setStatusFilter('Baru')} 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                statusFilter === 'Baru' 
+                  ? 'bg-blue-200 text-blue-800' 
+                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              Baru
+            </button>
+            <button 
+              onClick={() => setStatusFilter('Dihubungi')} 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                statusFilter === 'Dihubungi' 
+                  ? 'bg-yellow-200 text-yellow-800' 
+                  : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
+              }`}
+            >
+              Dihubungi
+            </button>
+            <button 
+              onClick={() => setStatusFilter('Selesai')} 
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                statusFilter === 'Selesai' 
+                  ? 'bg-green-200 text-green-800' 
+                  : 'bg-green-50 text-green-600 hover:bg-green-100'
+              }`}
+            >
+              Selesai
+            </button>
+          </div>
+          
           <button 
             onClick={() => setStatusFilter('Starred')} 
             className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -414,7 +427,7 @@ const AdminMessages = () => {
                 : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
             }`}
           >
-            <Star size={16} className="inline mr-1" />
+            <Star size={14} className="inline mr-1" />
             Starred
           </button>
         </div>
@@ -424,6 +437,7 @@ const AdminMessages = () => {
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="text-center py-10">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
             <p className="text-gray-500">Loading messages...</p>
           </div>
         ) : filteredMessages.length === 0 ? (
@@ -431,35 +445,39 @@ const AdminMessages = () => {
             <p className="text-gray-500">No messages found matching your criteria.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto" style={{ maxWidth: '100%' }}>
+            <table className="w-full min-w-[1000px] table-auto">
               <thead>
-                <tr className="bg-gray-50 text-left">
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Tanggal</th>
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Nama</th>
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Email</th>
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Telepon</th>
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Status</th>
-                  <th className="px-6 py-3 text-gray-600 font-medium text-sm">Aksi</th>
+                <tr className="bg-gray-50 text-left border-b border-gray-200">
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Date</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Name</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Email</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Phone</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Subject</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-gray-600 font-medium text-sm whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredMessages.map((message) => (
                   <tr key={message.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-800">
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
                       {formatDate(message.date)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-800 flex items-center">
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap flex items-center">
                       {message.starred && <Star size={16} className="text-amber-500 mr-1 inline-block" />}
-                      {message.name}
+                      <span className="truncate max-w-[150px]">{message.name}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-800">
-                      {message.email}
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                      <span className="truncate max-w-[150px] block">{message.email}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-800">
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
                       {message.phone || '-'}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 text-sm text-gray-800">
+                      <span className="truncate max-w-[150px] block">{message.subject}</span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span 
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           message.status === 'Dihubungi' 
@@ -472,13 +490,13 @@ const AdminMessages = () => {
                         {message.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleViewMessageDetails(message)}
-                          className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
+                          className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 whitespace-nowrap"
                         >
-                          Lihat
+                          View
                         </button>
                         
                         <div className="relative inline-block text-left">
@@ -496,7 +514,7 @@ const AdminMessages = () => {
                                 }
                               }}
                             >
-                              {message.status}
+                              Status
                               <ChevronDown className="h-4 w-4 ml-1" />
                             </button>
                           </div>
@@ -558,13 +576,6 @@ const AdminMessages = () => {
                           }`}
                         >
                           <Star size={18} className={message.starred ? 'fill-amber-500' : ''} />
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteMessage(message.id)}
-                          className="p-1 text-red-500 bg-red-50 rounded-md hover:bg-red-100"
-                        >
-                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
