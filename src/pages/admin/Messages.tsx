@@ -43,7 +43,22 @@ const AdminMessages = () => {
         return;
       }
 
-      setMessages(data || []);
+      // Convert and validate the status field before setting state
+      const validMessages = (data || []).map(msg => {
+        // Ensure status is one of the allowed values, default to 'Unread' if not
+        const validStatus = ['Unread', 'Read', 'Replied'].includes(msg.status || '') 
+          ? (msg.status as 'Unread' | 'Read' | 'Replied') 
+          : 'Unread';
+        
+        return {
+          ...msg,
+          status: validStatus,
+          // Ensure boolean type for starred
+          starred: Boolean(msg.starred)
+        } as ClientMessage;
+      });
+
+      setMessages(validMessages);
     } catch (error) {
       console.error('Unexpected error fetching messages:', error);
       toast.error('An unexpected error occurred');

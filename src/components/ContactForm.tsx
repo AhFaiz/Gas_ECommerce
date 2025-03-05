@@ -33,7 +33,7 @@ const ContactForm = () => {
           phone: formData.phone || null,
           subject: formData.subject,
           message: formData.message,
-          status: 'Unread',
+          status: 'Unread', // Explicitly set as string literal to match expected type
           starred: false,
           date: new Date().toISOString(),
         });
