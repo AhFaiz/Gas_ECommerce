@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 
 const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,16 +40,18 @@ const ContactForm = () => {
         phone: formData.phone || null,
         subject: formData.subject,
         message: formData.message,
-        status: 'Baru', // Always use 'Baru' as the status value
+        status: 'Baru',
         starred: false,
         date: new Date().toISOString(),
       };
       
       console.log('Sending to Supabase:', messageData);
       
+      // Enable debug mode to log the full request
       const { data, error } = await supabase
         .from('client_messages')
-        .insert(messageData);
+        .insert(messageData)
+        .select();
       
       if (error) {
         console.error('Supabase error:', error);
@@ -58,7 +61,7 @@ const ContactForm = () => {
         return;
       }
       
-      console.log('Form submitted successfully');
+      console.log('Form submitted successfully, response:', data);
       toast.success('Your message has been sent successfully!');
       
       // Reset form on success
