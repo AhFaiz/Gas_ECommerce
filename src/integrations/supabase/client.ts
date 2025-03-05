@@ -31,13 +31,23 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase auth event:', event, session);
 });
 
-// Override the API key for admin routes to bypass RLS
+// Override for admin routes to bypass RLS
 export const setAdminMode = () => {
   if (localStorage.getItem('adminAuthenticated') === 'true') {
     console.log('Setting admin mode for Supabase client');
-    // Set a header that would identify admin requests
-    supabase.supabaseUrl = SUPABASE_URL;
-    supabase.supabaseKey = SUPABASE_PUBLISHABLE_KEY;
+    
+    // Instead of trying to modify protected properties directly,
+    // we'll create custom headers for our requests that will identify admin requests
+    supabase.functions.setAuth(SUPABASE_PUBLISHABLE_KEY);
+    
+    // Update the global headers to include admin authentication marker
+    const currentHeaders = supabase.rest.headers;
+    supabase.rest.setHeaders({
+      ...currentHeaders,
+      'x-admin-auth': 'true', // This is a custom header that our RLS policies can check for
+    });
+    
+    console.log('Admin mode set successfully');
   }
 };
 
