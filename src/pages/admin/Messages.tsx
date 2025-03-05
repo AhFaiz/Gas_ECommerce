@@ -198,6 +198,15 @@ const AdminMessages = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: 'Baru' | 'Dihubungi' | 'Selesai') => {
     try {
+      console.log(`Updating message status to: ${newStatus}`);
+      
+      // Make sure newStatus is one of the allowed values
+      if (!['Baru', 'Dihubungi', 'Selesai'].includes(newStatus)) {
+        console.error('Invalid status value:', newStatus);
+        toast.error('Invalid status value');
+        return;
+      }
+      
       const { error } = await supabase
         .from('client_messages')
         .update({ status: newStatus })
@@ -372,13 +381,71 @@ const AdminMessages = () => {
                         </button>
                         
                         <div className="relative inline-block text-left">
-                          <button
-                            onClick={() => handleUpdateStatus(message.id, 'Dihubungi')}
-                            className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center"
+                          <div>
+                            <button
+                              type="button"
+                              className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center"
+                              id={`status-menu-button-${message.id}`}
+                              aria-expanded="true"
+                              aria-haspopup="true"
+                              onClick={() => {
+                                const dropdown = document.getElementById(`status-dropdown-${message.id}`);
+                                if (dropdown) {
+                                  dropdown.classList.toggle('hidden');
+                                }
+                              }}
+                            >
+                              {message.status}
+                              <ChevronDown className="h-4 w-4 ml-1" />
+                            </button>
+                          </div>
+                          <div 
+                            id={`status-dropdown-${message.id}`}
+                            className="hidden origin-top-right absolute right-0 mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                            role="menu"
+                            aria-orientation="vertical"
+                            aria-labelledby={`status-menu-button-${message.id}`}
+                            tabIndex={-1}
                           >
-                            <span>Dihubungi</span>
-                            <ChevronDown className="h-4 w-4 ml-1" />
-                          </button>
+                            <div className="py-1" role="none">
+                              <button
+                                className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                role="menuitem"
+                                tabIndex={-1}
+                                onClick={() => {
+                                  handleUpdateStatus(message.id, 'Baru');
+                                  const dropdown = document.getElementById(`status-dropdown-${message.id}`);
+                                  if (dropdown) dropdown.classList.add('hidden');
+                                }}
+                              >
+                                Baru
+                              </button>
+                              <button
+                                className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                role="menuitem"
+                                tabIndex={-1}
+                                onClick={() => {
+                                  handleUpdateStatus(message.id, 'Dihubungi');
+                                  const dropdown = document.getElementById(`status-dropdown-${message.id}`);
+                                  if (dropdown) dropdown.classList.add('hidden');
+                                }}
+                              >
+                                Dihubungi
+                              </button>
+                              <button
+                                className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                role="menuitem"
+                                tabIndex={-1}
+                                onClick={() => {
+                                  handleUpdateStatus(message.id, 'Selesai');
+                                  const dropdown = document.getElementById(`status-dropdown-${message.id}`);
+                                  if (dropdown) dropdown.classList.add('hidden');
+                                }}
+                              >
+                                Selesai
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         
                         <button

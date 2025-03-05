@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,7 +39,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       phone: formData.phone || null,
       subject: formData.subject,
       message: formData.message,
-      status: 'Baru', // Changed from 'Unread' to 'Baru'
+      status: 'Baru', // Use 'Baru' as the status value
       starred: false,
       date: new Date().toISOString(),
     };
@@ -107,6 +106,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 };
 
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
