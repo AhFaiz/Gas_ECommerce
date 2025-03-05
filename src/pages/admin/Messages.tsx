@@ -22,7 +22,6 @@ const AdminMessages = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedMessage, setSelectedMessage] = useState<ClientMessage | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [replyText, setReplyText] = useState('');
 
   useEffect(() => {
     fetchMessages();
@@ -156,7 +155,6 @@ const AdminMessages = () => {
     
     setSelectedMessage(message);
     setIsDetailsModalOpen(true);
-    setReplyText('');
   };
 
   const handleCloseModal = () => {
@@ -251,47 +249,6 @@ const AdminMessages = () => {
         console.error('Unexpected error deleting message:', error);
         toast.error('An unexpected error occurred');
       }
-    }
-  };
-
-  const handleReplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedMessage) return;
-    
-    if (replyText.trim() === '') {
-      toast.error('Please enter a reply message');
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('client_messages')
-        .update({ status: 'Dihubungi' })
-        .eq('id', selectedMessage.id);
-        
-      if (error) {
-        console.error('Error updating reply status:', error);
-        toast.error('Failed to update reply status');
-        return;
-      }
-      
-      // Update local state
-      const updatedMessages = messages.map(message => 
-        message.id === selectedMessage.id ? { ...message, status: 'Dihubungi' as const } : message
-      );
-      
-      setMessages(updatedMessages);
-      setSelectedMessage({ ...selectedMessage, status: 'Dihubungi' });
-      
-      // In a real app, this would send the reply to the customer
-      console.log(`Reply to ${selectedMessage.email}:`, replyText);
-      
-      toast.success('Reply sent successfully');
-      setReplyText('');
-    } catch (error) {
-      console.error('Unexpected error sending reply:', error);
-      toast.error('An unexpected error occurred');
     }
   };
 
@@ -616,33 +573,6 @@ const AdminMessages = () => {
                       </button>
                     </div>
                   </div>
-                  
-                  <h4 className="font-medium text-gray-900 mb-2">Reply</h4>
-                  <form onSubmit={handleReplySubmit}>
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary/30 focus:ring-2 focus:border-primary mb-3"
-                      placeholder="Type your reply here..."
-                    ></textarea>
-                    
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleCloseModal}
-                        className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary mr-3"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      >
-                        Send Reply
-                      </button>
-                    </div>
-                  </form>
                 </div>
               </div>
             </div>
