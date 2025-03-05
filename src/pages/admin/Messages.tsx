@@ -1,3 +1,4 @@
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,26 +31,7 @@ const AdminMessages = () => {
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
 
   useEffect(() => {
-    // Create an anonymous session for development if not authenticated
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      console.log('Current Supabase session:', data.session);
-      
-      // If no session, try to create an anonymous session for development
-      if (!data.session) {
-        console.log('No Supabase session, creating anonymous session for development');
-        await supabase.auth.signInAnonymously();
-        
-        // Wait a short time for auth to complete before fetching
-        setTimeout(() => {
-          fetchMessages();
-        }, 500);
-      } else {
-        fetchMessages();
-      }
-    };
-    
-    checkAuth();
+    fetchMessages();
   }, []);
 
   const fetchStatusCounts = async () => {
@@ -83,64 +65,104 @@ const AdminMessages = () => {
     try {
       console.log('Fetching messages from Supabase...');
       
-      // Test a raw fetch to bypass client-side filtering
+      // First try direct fetch as a test
       try {
-        const rawResponse = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
+        console.log('Testing raw fetch to Supabase');
+        const response = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
           headers: {
-            'apikey': `${SUPABASE_API_KEY}`,
+            'apikey': SUPABASE_API_KEY,
             'Authorization': `Bearer ${SUPABASE_API_KEY}`
           }
         });
-        const rawData = await rawResponse.json();
-        console.log('Raw fetch result:', rawData);
+        
+        if (!response.ok) {
+          console.error('Raw fetch error, status:', response.status);
+          const errorText = await response.text();
+          console.error('Raw fetch error details:', errorText);
+        } else {
+          const rawData = await response.json();
+          console.log('Raw fetch successful, got', rawData.length, 'messages');
+        }
       } catch (error) {
         console.error('Raw fetch error:', error);
       }
       
-      // Actual fetch for all messages
+      // Now try with supabase client
       const { data, error } = await supabase
         .from('client_messages')
         .select('*')
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('Error fetching messages with supabase client:', error);
         console.error('Error details:', error.details, error.message, error.code);
         toast.error(`Failed to load messages: ${error.message}`);
+        
+        // Fallback to fetch API as a last resort
+        try {
+          console.log('Trying fallback fetch method...');
+          const fallbackResponse = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+              'Prefer': 'return=representation'
+            }
+          });
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            console.log('Fallback fetch successful:', fallbackData);
+            
+            if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+              processAndSetMessages(fallbackData);
+              return;
+            }
+          } else {
+            console.error('Fallback fetch failed:', await fallbackResponse.text());
+          }
+        } catch (fallbackError) {
+          console.error('Fallback fetch error:', fallbackError);
+        }
+        
         setIsLoading(false);
         return;
       }
 
       console.log('Messages retrieved successfully:', data);
-      
-      // Convert and validate the data before setting state
-      const validMessages = (data || []).map(msg => {
-        // Ensure status is one of the allowed values
-        let validStatus: 'Baru' | 'Dihubungi' | 'Selesai';
-        
-        if (!['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
-          validStatus = 'Baru'; // Default status if invalid
-        } else {
-          validStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
-        }
-        
-        return {
-          ...msg,
-          status: validStatus,
-          // Ensure boolean type for starred
-          starred: Boolean(msg.starred)
-        } as ClientMessage;
-      });
-
-      setMessages(validMessages);
-      // After setting messages, fetch status counts
-      fetchStatusCounts();
+      processAndSetMessages(data || []);
     } catch (error) {
       console.error('Unexpected error fetching messages:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
+      toast.error('An unexpected error occurred while fetching messages');
       setIsLoading(false);
     }
+  };
+  
+  const processAndSetMessages = (data: any[]) => {
+    // Convert and validate the data before setting state
+    const validMessages = data.map(msg => {
+      // Ensure status is one of the allowed values
+      let validStatus: 'Baru' | 'Dihubungi' | 'Selesai';
+      
+      if (!['Baru', 'Dihubungi', 'Selesai'].includes(msg.status || '')) {
+        validStatus = 'Baru'; // Default status if invalid
+      } else {
+        validStatus = msg.status as 'Baru' | 'Dihubungi' | 'Selesai';
+      }
+      
+      return {
+        ...msg,
+        status: validStatus,
+        // Ensure boolean type for starred
+        starred: Boolean(msg.starred)
+      } as ClientMessage;
+    });
+
+    setMessages(validMessages);
+    // After setting messages, fetch status counts
+    fetchStatusCounts();
+    setIsLoading(false);
   };
 
   // Filter messages based on search query and status filter
@@ -286,6 +308,7 @@ const AdminMessages = () => {
     }
   };
 
+  // Helper function for status badge styling
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Baru': return 'bg-blue-100 text-blue-800';
@@ -370,8 +393,8 @@ const AdminMessages = () => {
             onClick={() => fetchMessages()}
             className="px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 hover:bg-gray-50 flex items-center gap-1"
           >
-            <RefreshCw size={14} />
-            Refresh
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            {isLoading ? "Loading..." : "Refresh"}
           </button>
           
           <button 
@@ -440,9 +463,15 @@ const AdminMessages = () => {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
             <p className="text-gray-500">Loading messages...</p>
           </div>
-        ) : filteredMessages.length === 0 ? (
+        ) : messages.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-gray-500">No messages found matching your criteria.</p>
+            <p className="text-gray-500 mb-4">No messages found matching your criteria.</p>
+            <button 
+              onClick={fetchMessages}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto" style={{ maxWidth: '100%' }}>
@@ -732,33 +761,4 @@ const AdminMessages = () => {
                 
                 <div>
                   <div className="text-gray-500">Pesan:</div>
-                  <div className="mt-1 p-3 bg-gray-50 rounded-md text-gray-800">
-                    {selectedMessage.subject && <div className="font-medium mb-2">{selectedMessage.subject}</div>}
-                    <div className="whitespace-pre-line">{selectedMessage.message}</div>
-                  </div>
-                </div>
-                
-                <div className="pt-4 flex justify-end gap-2">
-                  <button
-                    onClick={() => handleDeleteMessage(selectedMessage.id)}
-                    className="px-4 py-2 bg-red-500 text-white rounded font-medium hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={handleCloseModal}
-                    className="px-4 py-2 bg-black text-white rounded font-medium hover:bg-gray-800"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AdminMessages;
+                  <div
