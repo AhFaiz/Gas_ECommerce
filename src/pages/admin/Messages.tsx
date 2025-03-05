@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, Eye, Trash2, ChevronDown, Star, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase, SUPABASE_API_URL, SUPABASE_API_KEY } from '../../integrations/supabase/client';
 
 interface ClientMessage {
   id: string;
@@ -86,10 +85,10 @@ const AdminMessages = () => {
       
       // Test a raw fetch to bypass client-side filtering
       try {
-        const rawResponse = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages?select=*`, {
+        const rawResponse = await fetch(`${SUPABASE_API_URL}/rest/v1/client_messages?select=*`, {
           headers: {
-            'apikey': `${supabase.supabaseKey}`,
-            'Authorization': `Bearer ${supabase.supabaseKey}`
+            'apikey': `${SUPABASE_API_KEY}`,
+            'Authorization': `Bearer ${SUPABASE_API_KEY}`
           }
         });
         const rawData = await rawResponse.json();
