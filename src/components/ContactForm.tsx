@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -46,16 +47,45 @@ const ContactForm = () => {
       
       console.log('Sending to Supabase:', messageData);
       
-      // Insert data into Supabase - using the RLS policy we created
-      const { error } = await supabase
+      // Try to insert using the raw client to bypass any client-side issues
+      const { data, error } = await supabase
         .from('client_messages')
         .insert(messageData);
       
       if (error) {
         console.error('Supabase error:', error);
-        toast.error('There was an error sending your message. Please try again.');
-        setIsSubmitting(false);
-        return;
+        console.error('Error details:', error.details, error.hint, error.message);
+        
+        // Try direct API method for debugging
+        try {
+          console.log('Attempting direct API call...');
+          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': `${supabase.supabaseKey}`,
+              'Authorization': `Bearer ${supabase.supabaseKey}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(messageData)
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Direct API call failed:', response.status, errorText);
+            toast.error('There was an error sending your message. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
+          
+          console.log('Direct API call succeeded:', response.status);
+          // Continue to success flow if direct call worked
+        } catch (directError) {
+          console.error('Direct API call exception:', directError);
+          toast.error('There was an error sending your message. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       console.log('Form submitted successfully');

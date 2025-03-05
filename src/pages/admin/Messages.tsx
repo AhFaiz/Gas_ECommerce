@@ -33,15 +33,59 @@ const AdminMessages = () => {
     setIsLoading(true);
     try {
       console.log('Fetching messages from Supabase...');
+      
+      // Try with the Supabase client
       const { data, error } = await supabase
         .from('client_messages')
         .select('*')
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching messages:', error);
-        toast.error('Failed to load messages');
-        return;
+        console.error('Error fetching messages with Supabase client:', error);
+        
+        // Try with a direct API call as a fallback
+        try {
+          console.log('Attempting direct API call to fetch messages...');
+          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/client_messages?select=*&order=date.desc`, {
+            headers: {
+              'apikey': `${supabase.supabaseKey}`,
+              'Authorization': `Bearer ${supabase.supabaseKey}`
+            }
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Direct API call failed:', response.status, errorText);
+            toast.error('Failed to load messages');
+            setIsLoading(false);
+            return;
+          }
+          
+          const directData = await response.json();
+          console.log('Direct API call succeeded, messages:', directData);
+          
+          // Process the data the same way as the Supabase client version
+          const validMessages = (directData || []).map((msg: any) => {
+            const validStatus = ['Unread', 'Read', 'Replied'].includes(msg.status || '') 
+              ? (msg.status as 'Unread' | 'Read' | 'Replied') 
+              : 'Unread';
+            
+            return {
+              ...msg,
+              status: validStatus,
+              starred: Boolean(msg.starred)
+            } as ClientMessage;
+          });
+          
+          setMessages(validMessages);
+          setIsLoading(false);
+          return;
+        } catch (directError) {
+          console.error('Direct API call exception:', directError);
+          toast.error('Failed to load messages');
+          setIsLoading(false);
+          return;
+        }
       }
 
       console.log('Messages retrieved successfully:', data);
