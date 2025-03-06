@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import OrderModal from './OrderModal';
 
 interface ProductCardProps {
@@ -15,7 +15,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, category, isNew = false }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openOrderModal = () => {
@@ -49,17 +48,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, categ
               NEW
             </div>
           )}
-          
-          <button
-            className={`absolute top-3 right-3 p-2 rounded-full transition-all-200 
-              ${isFavorite 
-                ? 'bg-white/90 text-red-500' 
-                : 'bg-white/80 text-foreground/60 hover:text-red-500'}`}
-            onClick={() => setIsFavorite(!isFavorite)}
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
           
           <div 
             className={`absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-2 transition-all duration-300 flex justify-center
