@@ -15,14 +15,12 @@ interface Product {
   is_new?: boolean;
 }
 
+// Updated categories to only include the three specified plus "All"
 const categories = [
   'All',
   'Household',
   'Industrial',
-  'Commercial',
-  'Portable',
-  'Outdoor',
-  'Accessories'
+  'Portable'
 ];
 
 const Products = () => {

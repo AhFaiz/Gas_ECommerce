@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -230,13 +229,14 @@ const AdminProducts = () => {
     }
   };
 
+  // Changed categories to only include the three specified
+  const categories = ['Household', 'Industrial', 'Portable'];
+
   // Filter products based on search query
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const categories = ['Household', 'Industrial', 'Commercial', 'Portable', 'Outdoor', 'Accessories'];
 
   return (
     <div className="space-y-8">
