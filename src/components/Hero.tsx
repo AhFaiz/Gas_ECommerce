@@ -43,7 +43,7 @@ const Hero = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center pt-16 overflow-hidden">
       {/* Background with overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/70 to-primary/40 z-10"></div>
       
       {/* Carousel background images */}
       {backgroundImages.map((image, index) => (
@@ -59,7 +59,7 @@ const Hero = () => {
       {/* Carousel navigation buttons */}
       <button 
         onClick={prevImage}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-all duration-200"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-primary/30 hover:bg-primary/50 text-white rounded-full p-2 transition-all duration-200"
         aria-label="Previous image"
       >
         <ChevronLeft size={24} />
@@ -67,7 +67,7 @@ const Hero = () => {
       
       <button 
         onClick={nextImage}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-all duration-200"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-primary/30 hover:bg-primary/50 text-white rounded-full p-2 transition-all duration-200"
         aria-label="Next image"
       >
         <ChevronRight size={24} />
@@ -81,7 +81,7 @@ const Hero = () => {
               loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="inline-block bg-primary/90 backdrop-blur-sm text-white text-sm font-medium px-3 py-1 rounded-full mb-6">
+            <div className="inline-block bg-secondary text-foreground text-sm font-medium px-3 py-1 rounded-full mb-6">
               Premium Quality Gas Products
             </div>
           </div>
@@ -109,7 +109,7 @@ const Hero = () => {
           >
             <Link
               to="/products"
-              className="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-all-200 inline-flex items-center"
+              className="bg-secondary hover:bg-secondary/90 text-foreground font-medium px-6 py-3 rounded-lg transition-all-200 inline-flex items-center"
             >
               Explore Products
               <ArrowRight size={18} className="ml-2" />
