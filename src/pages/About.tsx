@@ -18,34 +18,6 @@ const About = () => {
     { label: 'Team Members', value: '120+' },
   ];
 
-  // Team members
-  const team = [
-    {
-      name: 'Alex Johnson',
-      role: 'CEO & Founder',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
-      bio: 'Alex founded Gasify with a vision to revolutionize the gas industry through quality products and exceptional service.',
-    },
-    {
-      name: 'Sarah Williams',
-      role: 'Operations Director',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
-      bio: 'With over 10 years in the industry, Sarah ensures our operations run smoothly and efficiently.',
-    },
-    {
-      name: 'David Chen',
-      role: 'Technical Lead',
-      image: 'https://randomuser.me/api/portraits/men/22.jpg',
-      bio: 'David oversees product quality and safety standards, ensuring all gas products meet rigorous specifications.',
-    },
-    {
-      name: 'Layla Rodriguez',
-      role: 'Customer Experience Manager',
-      image: 'https://randomuser.me/api/portraits/women/63.jpg',
-      bio: 'Layla leads our customer service team, focusing on creating exceptional experiences for all Gasify customers.',
-    },
-  ];
-
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
@@ -222,41 +194,6 @@ const About = () => {
                 </div>
                 <h3 className="font-display font-semibold text-lg mb-2">{value.title}</h3>
                 <p className="text-foreground/70 text-sm">{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Team Section */}
-      <section className="section-padding bg-gray-50">
-        <div className="page-container">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="font-display font-bold text-3xl mb-4">Our Leadership Team</h2>
-            <p className="text-foreground/70">
-              Meet the dedicated professionals who drive our mission forward
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {team.map((member, index) => (
-              <div 
-                key={index} 
-                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all-300 overflow-hidden animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img 
-                    src={member.image} 
-                    alt={member.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                  />
-                </div>
-                <div className="p-5">
-                  <h3 className="font-display font-semibold text-lg">{member.name}</h3>
-                  <p className="text-primary/80 text-sm mb-3">{member.role}</p>
-                  <p className="text-foreground/70 text-sm">{member.bio}</p>
-                </div>
               </div>
             ))}
           </div>
