@@ -1,10 +1,40 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+// Array of background images for the carousel
+const backgroundImages = [
+  "https://cdn0-production-images-kly.akamaized.net/m2jZn2TtAW1pf613wFNr4kKz9rs=/1200x675/smart/filters:quality(75):strip_icc():format(jpeg)/kly-media-production/medias/4515967/original/012462200_1690427557-01912ff0-5e2e-4d47-8b5d-946344fd31ba.jpeg",
+  "https://cdn0-production-images-kly.akamaized.net/DdQc1I4poeHA6MxPKxeEx038xtA=/1200x675/smart/filters:quality(75):strip_icc():format(jpeg)/kly-media-production/medias/2795179/original/096958300_1556865172-20190503-Pertamina-Jamin-Stok-LPG-Ramadan-ANGGA-1.jpg",
+  "https://asset-2.tstatic.net/tribunnews/foto/bank/images/Gas-elpiji-gas-LPG-3-kg-bos.jpg"
+];
 
 const Hero = () => {
   const [loaded, setLoaded] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Handle carousel navigation
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? backgroundImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Auto-change image every 3.5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      nextImage();
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setLoaded(true);
@@ -14,7 +44,34 @@ const Hero = () => {
     <section className="relative min-h-[90vh] flex items-center pt-16 overflow-hidden">
       {/* Background with overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10"></div>
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1588152850700-c8d2abe38762?q=80&w=2070')] bg-cover bg-center"></div>
+      
+      {/* Carousel background images */}
+      {backgroundImages.map((image, index) => (
+        <div 
+          key={index}
+          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+            index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ backgroundImage: `url('${image}')` }}
+        ></div>
+      ))}
+      
+      {/* Carousel navigation buttons */}
+      <button 
+        onClick={prevImage}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-all duration-200"
+        aria-label="Previous image"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      
+      <button 
+        onClick={nextImage}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-all duration-200"
+        aria-label="Next image"
+      >
+        <ChevronRight size={24} />
+      </button>
       
       {/* Content */}
       <div className="page-container relative z-20 py-16 md:py-20">
