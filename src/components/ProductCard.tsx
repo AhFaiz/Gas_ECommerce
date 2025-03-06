@@ -83,7 +83,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, categ
             <h3 className="font-medium text-base truncate">{name}</h3>
           </Link>
           <div className="mt-1.5 font-display font-semibold text-lg">
-            ${price.toFixed(2)}
+            Rp{price.toLocaleString('id-ID')}
           </div>
         </div>
       </div>

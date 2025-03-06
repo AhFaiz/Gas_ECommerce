@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -261,7 +262,7 @@ const Products = () => {
                       price={product.price} 
                       image={product.image} 
                       category={product.category} 
-                      isNew={!!product.is_new} // Ensure boolean type with double negation
+                      isNew={!!product.is_new}
                     />
                   </div>
                 ))}

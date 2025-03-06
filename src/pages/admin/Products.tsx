@@ -304,6 +304,7 @@ const AdminProducts = () => {
                 </th>
               </tr>
             </thead>
+            
             {/* Table body */}
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
@@ -360,7 +361,7 @@ const AdminProducts = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">${product.price.toFixed(2)}</div>
+                      <div className="text-sm text-gray-900">Rp{product.price.toLocaleString('id-ID')}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{product.stock} units</div>
