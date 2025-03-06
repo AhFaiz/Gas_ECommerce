@@ -9,6 +9,7 @@ const Navbar = () => {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,7 +38,11 @@ const Navbar = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all-300 ${
-        isScrolled ? 'glass-morphism py-3' : 'bg-transparent py-5'
+        isScrolled 
+          ? 'glass-morphism py-3' 
+          : isHomePage 
+            ? 'bg-[#f0f0f0]/85 backdrop-blur-sm py-5' // gray translucent background for homepage
+            : 'bg-transparent py-5'
       }`}
     >
       <nav className="page-container flex justify-between items-center">
