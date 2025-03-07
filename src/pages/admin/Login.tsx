@@ -128,7 +128,7 @@ const AdminLogin = () => {
           
           <div className="text-sm text-center">
             <p className="text-gray-500">
-              For demo: Username: admin123, Password: admin123
+              Hello Admin !! Hope Have a Good Day :))
             </p>
           </div>
         </form>
