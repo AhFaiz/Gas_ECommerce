@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,15 +73,8 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <button className="relative text-foreground/70 hover:text-primary transition-all-200 rounded-full p-2 hover:bg-primary/10">
-            <ShoppingCart size={20} />
-            <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full">
-              0
-            </span>
-          </button>
-        </div>
+        {/* Empty div to maintain layout balance (replaced cart icons) */}
+        <div className="hidden md:block"></div>
 
         {/* Mobile Menu Button */}
         <button
@@ -113,15 +105,8 @@ const Navbar = () => {
                 </Link>
               ))}
             </div>
-
-            <div className="mt-auto flex justify-center space-x-8">
-              <button className="relative text-foreground/70 hover:text-primary transition-all-200">
-                <ShoppingCart size={24} />
-                <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center bg-primary text-white text-xs font-bold rounded-full">
-                  0
-                </span>
-              </button>
-            </div>
+            
+            {/* Removed cart icon from mobile menu */}
           </div>
         </div>
       </nav>

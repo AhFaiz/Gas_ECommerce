@@ -1,83 +1,43 @@
 
-import React from 'react';
-import { 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  TrendingUp, 
-  ArrowUp, 
-  ArrowDown
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
 const AdminDashboard = () => {
-  // Mock data for dashboard
-  const stats = [
-    {
-      title: 'Total Products',
-      value: '24',
-      icon: Package,
-      change: '+2',
-      changeType: 'increase',
-      color: 'bg-blue-50 text-blue-600',
-    },
-    {
-      title: 'Total Orders',
-      value: '143',
-      icon: ShoppingCart,
-      change: '+12%',
-      changeType: 'increase',
-      color: 'bg-green-50 text-green-600',
-    },
-    {
-      title: 'Customer Messages',
-      value: '32',
-      icon: Users,
-      change: '-5%',
-      changeType: 'decrease',
-      color: 'bg-purple-50 text-purple-600',
-    },
-    {
-      title: 'Revenue',
-      value: '$12,430',
-      icon: TrendingUp,
-      change: '+8%',
-      changeType: 'increase',
-      color: 'bg-yellow-50 text-yellow-600',
-    },
-  ];
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [adminName, setAdminName] = useState('Admin');
+
+  useEffect(() => {
+    // Get admin username from localStorage if available
+    const storedUsername = localStorage.getItem('adminUsername');
+    if (storedUsername) {
+      setAdminName(storedUsername);
+    }
+
+    // Setup real-time clock
+    const clockInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(clockInterval);
+  }, []);
+
+  // Format the current time
+  const formattedTime = format(currentTime, 'HH:mm:ss');
+  const formattedDate = format(currentTime, 'EEEE, dd MMMM yyyy');
 
   return (
     <div className="space-y-8">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div 
-            key={index} 
-            className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                <div className="flex items-center mt-2">
-                  {stat.changeType === 'increase' ? (
-                    <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
-                  ) : (
-                    <ArrowDown className="h-4 w-4 text-red-500 mr-1" />
-                  )}
-                  <span 
-                    className={stat.changeType === 'increase' ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}
-                  >
-                    {stat.change} since last month
-                  </span>
-                </div>
-              </div>
-              <div className={`${stat.color} p-3 rounded-lg`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+        <h1 className="text-3xl font-bold text-primary mb-4">Welcome back, {adminName}!</h1>
+        <p className="text-gray-600 mb-8">
+          This is your admin dashboard. Here you can manage your products, orders, and more.
+        </p>
+        
+        <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-lg mx-auto max-w-md">
+          <div className="text-4xl font-bold text-primary mb-2">{formattedTime}</div>
+          <div className="text-gray-500">{formattedDate}</div>
+        </div>
       </div>
     </div>
   );
