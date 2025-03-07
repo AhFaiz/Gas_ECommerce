@@ -46,7 +46,7 @@ const About = () => {
               <div className="relative">
                 <div className="relative z-10 rounded-lg overflow-hidden shadow-md">
                   <img 
-                    src="https://images.unsplash.com/photo-1589802757543-6d5f09d88f01?q=80&w=2070" 
+                    src="https://berita.depok.go.id/storage/posts//m2yVsBPTVpXuW8TMl75XCwSmg9cTn4LIIfSfako8.webp" 
                     alt="Gasify headquarters" 
                     className="w-full h-full object-cover"
                   />
