@@ -18,7 +18,8 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
     console.log('ProtectedAdminRoute - Auth check:', { 
       isAuthenticated, 
       adminUsername, 
-      path: location.pathname 
+      path: location.pathname,
+      isProduction: import.meta.env.PROD
     });
     
     // If we're in development mode, auto-authenticate and set service role bypass
