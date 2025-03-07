@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart, Search } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -76,9 +76,6 @@ const Navbar = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
-          <button className="text-foreground/70 hover:text-primary transition-all-200 rounded-full p-2 hover:bg-primary/10">
-            <Search size={20} />
-          </button>
           <button className="relative text-foreground/70 hover:text-primary transition-all-200 rounded-full p-2 hover:bg-primary/10">
             <ShoppingCart size={20} />
             <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full">
@@ -118,9 +115,6 @@ const Navbar = () => {
             </div>
 
             <div className="mt-auto flex justify-center space-x-8">
-              <button className="text-foreground/70 hover:text-primary transition-all-200">
-                <Search size={24} />
-              </button>
               <button className="relative text-foreground/70 hover:text-primary transition-all-200">
                 <ShoppingCart size={24} />
                 <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center bg-primary text-white text-xs font-bold rounded-full">

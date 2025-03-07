@@ -10,14 +10,6 @@ const About = () => {
     setLoaded(true);
   }, []);
 
-  // Company stats
-  const stats = [
-    { label: 'Years of Experience', value: '15+' },
-    { label: 'Happy Customers', value: '10,000+' },
-    { label: 'Products Sold', value: '250,000+' },
-    { label: 'Team Members', value: '120+' },
-  ];
-
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
@@ -95,24 +87,6 @@ const About = () => {
                 <ArrowRight size={18} className="ml-1 transition-transform hover:translate-x-1" />
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="page-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {stats.map((stat, index) => (
-              <div 
-                key={index} 
-                className="text-center animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <p className="font-display font-bold text-3xl md:text-4xl text-primary mb-2">{stat.value}</p>
-                <p className="text-foreground/70 text-sm md:text-base">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

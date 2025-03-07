@@ -125,34 +125,6 @@ const Contact = () => {
           </div>
         </div>
       </section>
-      
-      {/* Newsletter Section */}
-      <section className="py-16 bg-white">
-        <div className="page-container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display font-bold text-2xl md:text-3xl mb-4">Subscribe to Our Newsletter</h2>
-            <p className="text-foreground/70 mb-8">
-              Stay updated with the latest products, special offers, and industry insights. We never spam or share your information.
-            </p>
-            
-            <form className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="flex-grow px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all-200"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-all-200 flex items-center justify-center whitespace-nowrap"
-              >
-                Subscribe
-                <Send size={16} className="ml-2" />
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
