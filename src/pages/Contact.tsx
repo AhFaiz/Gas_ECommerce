@@ -14,12 +14,12 @@ const Contact = () => {
     {
       icon: MapPin,
       title: 'Our Location',
-      content: '123 Gas Avenue, Industrial Park, Jakarta 12345, Indonesia',
+      content: 'Jl H.Mawi KP. Waru, GG. SERIUS RT04/RW01, Parung, Indonesia',
     },
     {
       icon: Phone,
       title: 'Phone Number',
-      content: '+62 123 4567 890',
+      content: '+62 812 8332 9743',
     },
     {
       icon: Mail,
