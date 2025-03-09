@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, X, ChevronDown, Star, Filter, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -510,27 +509,31 @@ const AdminMessages = () => {
                         </button>
                         
                         <div className="relative inline-block text-left">
-                          <div>
-                            <button
-                              type="button"
-                              className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center"
-                              id={`status-menu-button-${message.id}`}
-                              aria-expanded="true"
-                              aria-haspopup="true"
-                              onClick={() => {
-                                const dropdown = document.getElementById(`status-dropdown-${message.id}`);
-                                if (dropdown) {
-                                  dropdown.classList.toggle('hidden');
-                                }
-                              }}
-                            >
-                              Status
-                              <ChevronDown className="h-4 w-4 ml-1" />
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center"
+                            id={`status-menu-button-${message.id}`}
+                            aria-expanded="true"
+                            aria-haspopup="true"
+                            onClick={() => {
+                              const dropdown = document.getElementById(`status-dropdown-${message.id}`);
+                              if (dropdown) {
+                                // Close all other dropdowns first
+                                document.querySelectorAll('[id^="status-dropdown-"]').forEach(el => {
+                                  if (el.id !== `status-dropdown-${message.id}`) {
+                                    el.classList.add('hidden');
+                                  }
+                                });
+                                dropdown.classList.toggle('hidden');
+                              }
+                            }}
+                          >
+                            Status
+                            <ChevronDown className="h-4 w-4 ml-1" />
+                          </button>
                           <div 
                             id={`status-dropdown-${message.id}`}
-                            className="hidden origin-top-right absolute right-0 mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                            className="hidden fixed origin-top-right mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                             role="menu"
                             aria-orientation="vertical"
                             aria-labelledby={`status-menu-button-${message.id}`}
@@ -606,7 +609,7 @@ const AdminMessages = () => {
               onClick={handleCloseModal}
             ></div>
 
-            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg z-50">
               <div className="flex justify-between items-start">
                 <h3 className="text-lg font-bold text-gray-900">
                   Detail Pesan Klien
@@ -700,7 +703,7 @@ const AdminMessages = () => {
                         </button>
                         <div 
                           id="modal-status-dropdown"
-                          className="hidden absolute left-0 mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                          className="hidden absolute left-0 mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                         >
                           <div className="py-1">
                             <button
@@ -756,18 +759,4 @@ const AdminMessages = () => {
                   </button>
                   <button
                     onClick={handleCloseModal}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-200"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AdminMessages;
+                    className="px-3 py-1 bg-
