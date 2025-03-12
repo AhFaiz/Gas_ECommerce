@@ -12,11 +12,6 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
-// Placeholder pages for new navigation items
-import Facilities from "./pages/Facilities";
-import Activities from "./pages/Activities";
-import MediaCenter from "./pages/MediaCenter";
-
 // Admin pages
 import AdminLogin from "./pages/admin/Login";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -40,9 +35,6 @@ const App = () => (
             <Route index element={<Index />} />
             <Route path="products" element={<Products />} />
             <Route path="about" element={<About />} />
-            <Route path="facilities" element={<Facilities />} />
-            <Route path="activities" element={<Activities />} />
-            <Route path="media" element={<MediaCenter />} />
             <Route path="contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Route>

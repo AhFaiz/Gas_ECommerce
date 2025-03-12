@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Home, User, Building2, Calendar, FileVideo } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -24,39 +24,23 @@ const Footer = () => {
             <h3 className="font-display font-semibold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <Home size={14} />
-                  <span>Home</span>
+                <Link to="/" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                  Home
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <User size={14} />
-                  <span>Profile</span>
+                <Link to="/products" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                  Products
                 </Link>
               </li>
               <li>
-                <Link to="/facilities" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <Building2 size={14} />
-                  <span>Facilities</span>
+                <Link to="/about" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                  About Us
                 </Link>
               </li>
               <li>
-                <Link to="/activities" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <Calendar size={14} />
-                  <span>Activities</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/media" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <FileVideo size={14} />
-                  <span>Media Center</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center gap-2">
-                  <Mail size={14} />
-                  <span>Contact</span>
+                <Link to="/contact" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                  Contact
                 </Link>
               </li>
             </ul>
