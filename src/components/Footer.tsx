@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Home, Package, Info, MessageSquare } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -24,22 +24,26 @@ const Footer = () => {
             <h3 className="font-display font-semibold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                <Link to="/" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
+                  <Home size={14} className="mr-2" />
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/products" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                <Link to="/products" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
+                  <Package size={14} className="mr-2" />
                   Products
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                <Link to="/about" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
+                  <Info size={14} className="mr-2" />
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-block">
+                <Link to="/contact" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
+                  <MessageSquare size={14} className="mr-2" />
                   Contact
                 </Link>
               </li>

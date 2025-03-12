@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, Package, Info, MessageSquare } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,10 +29,10 @@ const Navbar = () => {
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { title: 'Home', path: '/' },
-    { title: 'Products', path: '/products' },
-    { title: 'About Us', path: '/about' },
-    { title: 'Contact', path: '/contact' },
+    { title: 'Home', path: '/', icon: <Home size={16} className="mr-1" /> },
+    { title: 'Products', path: '/products', icon: <Package size={16} className="mr-1" /> },
+    { title: 'About Us', path: '/about', icon: <Info size={16} className="mr-1" /> },
+    { title: 'Contact', path: '/contact', icon: <MessageSquare size={16} className="mr-1" /> },
   ];
 
   return (
@@ -40,7 +41,7 @@ const Navbar = () => {
         isScrolled 
           ? 'glass-morphism py-3' 
           : isHomePage 
-            ? 'bg-[#f0f0f0]/85 backdrop-blur-sm py-5' // gray translucent background for homepage
+            ? 'bg-[#f0f0f0]/85 backdrop-blur-sm py-5' 
             : 'bg-transparent py-5'
       }`}
     >
@@ -58,7 +59,7 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`relative font-medium transition-all-200 text-sm uppercase tracking-wide
+              className={`relative font-medium transition-all-200 text-sm uppercase tracking-wide flex items-center
                 ${isActive(link.path) 
                   ? 'text-primary font-semibold' 
                   : 'text-foreground/80 hover:text-primary'
@@ -68,6 +69,7 @@ const Navbar = () => {
                 after:transition-transform after:duration-300
               `}
             >
+              {link.icon}
               {link.title}
             </Link>
           ))}
@@ -96,17 +98,16 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-xl ${
+                  className={`text-xl flex items-center justify-center ${
                     isActive(link.path) ? 'text-primary font-semibold' : 'text-foreground/80'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  {link.icon}
                   {link.title}
                 </Link>
               ))}
             </div>
-            
-            {/* Removed cart icon from mobile menu */}
           </div>
         </div>
       </nav>
