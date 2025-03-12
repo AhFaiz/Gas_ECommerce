@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, User, Building2, Calendar, FileVideo, Mail, Moon } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,10 +29,12 @@ const Navbar = () => {
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { title: 'Home', path: '/' },
-    { title: 'Products', path: '/products' },
-    { title: 'About Us', path: '/about' },
-    { title: 'Contact', path: '/contact' },
+    { title: 'Home', path: '/', icon: Home },
+    { title: 'Profile', path: '/about', icon: User },
+    { title: 'Facilities', path: '/facilities', icon: Building2 },
+    { title: 'Activities', path: '/activities', icon: Calendar },
+    { title: 'Media Center', path: '/media', icon: FileVideo },
+    { title: 'Contact', path: '/contact', icon: Mail },
   ];
 
   return (
@@ -54,27 +57,32 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`relative font-medium transition-all-200 text-sm uppercase tracking-wide
-                ${isActive(link.path) 
-                  ? 'text-primary font-semibold' 
-                  : 'text-foreground/80 hover:text-primary'
-                }
-                after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-full after:h-[2px] after:bg-primary after:origin-bottom-right after:scale-x-0 
-                ${isActive(link.path) ? 'after:scale-x-100' : 'hover:after:scale-x-100 hover:after:origin-bottom-left'} 
-                after:transition-transform after:duration-300
-              `}
-            >
-              {link.title}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const IconComponent = link.icon;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`relative font-medium transition-all-200 text-sm flex items-center gap-1
+                  ${isActive(link.path) 
+                    ? 'text-primary font-semibold' 
+                    : 'text-foreground/80 hover:text-primary'
+                  }
+                `}
+              >
+                <IconComponent size={16} />
+                <span>{link.title}</span>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Empty div to maintain layout balance (replaced cart icons) */}
-        <div className="hidden md:block"></div>
+        {/* Dark Mode Toggle (right side) */}
+        <div className="hidden md:block">
+          <button className="text-foreground/80 hover:text-primary transition-colors-200">
+            <Moon size={18} />
+          </button>
+        </div>
 
         {/* Mobile Menu Button */}
         <button
@@ -92,21 +100,29 @@ const Navbar = () => {
         >
           <div className="flex flex-col h-full page-container pt-20 pb-16">
             <div className="flex flex-col space-y-6 text-center">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-xl ${
-                    isActive(link.path) ? 'text-primary font-semibold' : 'text-foreground/80'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.title}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const IconComponent = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center justify-center gap-2 text-xl ${
+                      isActive(link.path) ? 'text-primary font-semibold' : 'text-foreground/80'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <IconComponent size={20} />
+                    <span>{link.title}</span>
+                  </Link>
+                );
+              })}
+              
+              {/* Dark Mode Toggle in Mobile Menu */}
+              <button className="flex items-center justify-center gap-2 text-xl text-foreground/80">
+                <Moon size={20} />
+                <span>Dark Mode</span>
+              </button>
             </div>
-            
-            {/* Removed cart icon from mobile menu */}
           </div>
         </div>
       </nav>
