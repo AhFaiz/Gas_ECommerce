@@ -28,11 +28,16 @@ const Navbar = () => {
     }
   }, [mobileMenuOpen]);
 
+  // Close mobile menu when changing routes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const navLinks = [
-    { title: 'Home', path: '/', icon: <Home size={16} className="mr-1" /> },
-    { title: 'Products', path: '/products', icon: <Package size={16} className="mr-1" /> },
-    { title: 'About Us', path: '/about', icon: <Info size={16} className="mr-1" /> },
-    { title: 'Contact', path: '/contact', icon: <MessageSquare size={16} className="mr-1" /> },
+    { title: 'Home', path: '/', icon: <Home size={18} className="mr-2" /> },
+    { title: 'Products', path: '/products', icon: <Package size={18} className="mr-2" /> },
+    { title: 'About Us', path: '/about', icon: <Info size={18} className="mr-2" /> },
+    { title: 'Contact', path: '/contact', icon: <MessageSquare size={18} className="mr-2" /> },
   ];
 
   return (
@@ -80,31 +85,32 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-foreground p-1"
+          className="md:hidden text-foreground p-1 z-50"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Fullscreen overlay */}
         <div
-          className={`fixed inset-0 bg-background/95 backdrop-blur-md z-50 md:hidden transition-all-300 ${
-            mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+          className={`fixed inset-0 bg-background/95 backdrop-blur-md z-40 md:hidden transition-all-300 ${
+            mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
           }`}
         >
-          <div className="flex flex-col h-full page-container pt-20 pb-16">
-            <div className="flex flex-col space-y-6 text-center">
+          <div className="flex flex-col h-full page-container pt-24 pb-16">
+            <div className="flex flex-col space-y-8 text-center">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-xl flex items-center justify-center ${
+                  className={`text-xl flex items-center justify-center transition-all-200 ${
                     isActive(link.path) ? 'text-primary font-semibold' : 'text-foreground/80'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {link.icon}
-                  {link.title}
+                  {React.cloneElement(link.icon, { size: 24 })}
+                  <span className="ml-3 text-lg font-medium">{link.title}</span>
                 </Link>
               ))}
             </div>

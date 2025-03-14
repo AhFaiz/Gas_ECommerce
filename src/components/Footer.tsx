@@ -25,25 +25,25 @@ const Footer = () => {
             <ul className="space-y-3">
               <li>
                 <Link to="/" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
-                  <Home size={14} className="mr-2" />
+                  <Home size={16} className="mr-2" />
                   Home
                 </Link>
               </li>
               <li>
                 <Link to="/products" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
-                  <Package size={14} className="mr-2" />
+                  <Package size={16} className="mr-2" />
                   Products
                 </Link>
               </li>
               <li>
                 <Link to="/about" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
-                  <Info size={14} className="mr-2" />
+                  <Info size={16} className="mr-2" />
                   About Us
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-sm hover:text-primary transition-all-200 hover:translate-x-1 inline-flex items-center">
-                  <MessageSquare size={14} className="mr-2" />
+                  <MessageSquare size={16} className="mr-2" />
                   Contact
                 </Link>
               </li>
