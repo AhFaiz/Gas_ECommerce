@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Package, Info, MessageSquare } from 'lucide-react';
@@ -28,14 +27,13 @@ const Navbar = () => {
     }
   }, [mobileMenuOpen]);
 
-  // Close mobile menu when changing routes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
     { title: 'Home', path: '/', icon: <Home size={18} className="mr-2" /> },
-    { title: 'Products', path: '/products', icon: <Package size={18} className="mr-2" /> },
+    { title: 'Products', path: '/products', icon: <Package size={18} className="mr-2" />, activeColor: 'text-green-500' },
     { title: 'About Us', path: '/about', icon: <Info size={18} className="mr-2" /> },
     { title: 'Contact', path: '/contact', icon: <MessageSquare size={18} className="mr-2" /> },
   ];
@@ -58,7 +56,6 @@ const Navbar = () => {
           <span className="flex items-center">Gas<span className="text-foreground">ify</span></span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
             <Link
@@ -66,7 +63,7 @@ const Navbar = () => {
               to={link.path}
               className={`relative font-medium transition-all-200 text-sm uppercase tracking-wide flex items-center
                 ${isActive(link.path) 
-                  ? 'text-primary font-semibold' 
+                  ? link.activeColor || 'text-primary font-semibold' 
                   : 'text-foreground/80 hover:text-primary'
                 }
                 after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-full after:h-[2px] after:bg-primary after:origin-bottom-right after:scale-x-0 
@@ -80,10 +77,8 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Empty div to maintain layout balance (replaced cart icons) */}
         <div className="hidden md:block"></div>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-foreground p-1 z-50"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -92,25 +87,31 @@ const Navbar = () => {
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Mobile Menu - Fullscreen overlay */}
         <div
-          className={`fixed inset-0 bg-background/95 backdrop-blur-md z-40 md:hidden transition-all-300 ${
+          className={`fixed inset-0 bg-white z-40 md:hidden transition-all-300 ${
             mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
           }`}
         >
-          <div className="flex flex-col h-full page-container pt-24 pb-16">
-            <div className="flex flex-col space-y-8 text-center">
+          <div className="flex flex-col h-full pt-20 pb-16 px-6">
+            <div className="flex flex-col space-y-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-xl flex items-center justify-center transition-all-200 ${
-                    isActive(link.path) ? 'text-primary font-semibold' : 'text-foreground/80'
-                  }`}
+                  className={`flex items-center text-lg transition-all-200
+                    ${isActive(link.path) 
+                      ? (link.path === '/products' ? 'text-green-500 font-medium' : 'text-foreground font-medium') 
+                      : 'text-gray-600'
+                    }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {React.cloneElement(link.icon, { size: 24 })}
-                  <span className="ml-3 text-lg font-medium">{link.title}</span>
+                  <span className="w-8 h-8 flex items-center justify-center mr-4">
+                    {React.cloneElement(link.icon, { 
+                      size: 24,
+                      className: isActive(link.path) && link.path === '/products' ? 'text-green-500' : '' 
+                    })}
+                  </span>
+                  <span>{link.title}</span>
                 </Link>
               ))}
             </div>
