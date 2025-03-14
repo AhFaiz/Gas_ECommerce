@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Package, Info, MessageSquare } from 'lucide-react';
@@ -42,10 +43,10 @@ const Navbar = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all-300 ${
         isScrolled 
-          ? 'glass-morphism py-3' 
+          ? 'bg-white shadow-md py-3' 
           : isHomePage 
-            ? 'bg-[#f0f0f0]/85 backdrop-blur-sm py-5' 
-            : 'bg-transparent py-5'
+            ? 'bg-white shadow-sm py-5' 
+            : 'bg-white py-5'
       }`}
     >
       <nav className="page-container flex justify-between items-center">
@@ -98,17 +99,18 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center text-lg transition-all-200
+                  className={`flex items-center text-lg font-medium transition-all-200
                     ${isActive(link.path) 
-                      ? (link.path === '/products' ? 'text-green-500 font-medium' : 'text-foreground font-medium') 
-                      : 'text-gray-600'
+                      ? (link.path === '/products' ? 'text-green-500' : 'text-primary') 
+                      : 'text-gray-800'
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <span className="w-8 h-8 flex items-center justify-center mr-4">
+                  <span className="w-8 h-8 flex items-center justify-center mr-4 bg-gray-100 rounded-md">
                     {React.cloneElement(link.icon, { 
                       size: 24,
-                      className: isActive(link.path) && link.path === '/products' ? 'text-green-500' : '' 
+                      className: isActive(link.path) && link.path === '/products' ? 'text-green-500' : 
+                               isActive(link.path) ? 'text-primary' : 'text-gray-600'
                     })}
                   </span>
                   <span>{link.title}</span>
