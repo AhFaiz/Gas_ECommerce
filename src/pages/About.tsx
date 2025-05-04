@@ -1,7 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Award, Users, Target, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Card } from '@/components/ui/card';
 
 const About = () => {
   const [loaded, setLoaded] = useState(false);
@@ -44,23 +45,18 @@ const About = () => {
               }`}
             >
               <div className="relative">
-                <div className="relative z-10 rounded-lg overflow-hidden shadow-md">
-                  <img 
-                    src="/lovable-uploads/d5edca85-beab-4630-a278-c752e217081e.png" 
-                    alt="Gasify gas tank storage" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-4 -right-4 w-2/3 h-2/3 rounded-lg overflow-hidden shadow-lg z-0">
-                  <img 
-                    src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2070" 
-                    alt="Gasify operations" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary/90 backdrop-blur-sm text-white py-3 px-5 rounded-lg shadow-lg z-20">
-                  <p className="font-display font-semibold">Since 2008</p>
-                </div>
+                <Card className="overflow-hidden shadow-md">
+                  <AspectRatio ratio={4/3}>
+                    <img 
+                      src="/lovable-uploads/d5edca85-beab-4630-a278-c752e217081e.png" 
+                      alt="Gasify gas tank storage" 
+                      className="w-full h-full object-cover"
+                    />
+                  </AspectRatio>
+                  <div className="absolute bottom-5 left-5 bg-primary text-white py-2 px-4 rounded-md shadow-lg">
+                    <p className="font-display font-semibold">Since 2008</p>
+                  </div>
+                </Card>
               </div>
             </div>
             
