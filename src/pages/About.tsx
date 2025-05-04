@@ -46,8 +46,8 @@ const About = () => {
               <div className="relative">
                 <div className="relative z-10 rounded-lg overflow-hidden shadow-md">
                   <img 
-                    src="https://berita.depok.go.id/storage/posts//m2yVsBPTVpXuW8TMl75XCwSmg9cTn4LIIfSfako8.webp" 
-                    alt="Gasify headquarters" 
+                    src="/lovable-uploads/d5edca85-beab-4630-a278-c752e217081e.png" 
+                    alt="Gasify gas tank storage" 
                     className="w-full h-full object-cover"
                   />
                 </div>
