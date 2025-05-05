@@ -61,7 +61,7 @@ const AdminLayout = () => {
         }`}
       >
         <div className="p-6">
-          <h2 className="text-2xl font-display font-bold text-primary">Gasify Admin</h2>
+          <h2 className="text-2xl font-display font-bold text-primary">GasRafi Admin</h2>
           <p className="text-sm text-gray-500 mt-1">Management Dashboard</p>
         </div>
 
