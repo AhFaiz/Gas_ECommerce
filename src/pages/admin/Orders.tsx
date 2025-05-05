@@ -1,7 +1,26 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Eye, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, rawFetch } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Update the Order interface to match exactly what's in the database
 interface Order {
@@ -391,65 +410,77 @@ const AdminOrders = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-gray-800">Manajemen Pesanan</h1>
         <p className="text-sm text-gray-500 mt-1">Lihat dan kelola pesanan pelanggan</p>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={18} className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari pesanan..."
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
+      {/* Search and Filter Card */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            {/* Search */}
+            <div className="relative w-full sm:max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={18} className="text-gray-400" />
+              </div>
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari pesanan..."
+                className="pl-10 pr-4 py-2 w-full"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Status Filter */}
-          <div className="flex items-center">
-            <Filter size={18} className="text-gray-400 mr-2" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
-            >
-              <option value="All">Semua Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Processing">Processing</option>
-              <option value="Shipped">Dikirim</option>
-              <option value="Delivered">Selesai</option>
-              <option value="Cancelled">Dibatalkan</option>
-              <option value="New">New</option>
-            </select>
-          </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Filter size={18} className="text-gray-400" />
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => setStatusFilter(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">Semua Status</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Shipped">Dikirim</SelectItem>
+                    <SelectItem value="Delivered">Selesai</SelectItem>
+                    <SelectItem value="Cancelled">Dibatalkan</SelectItem>
+                    <SelectItem value="New">New</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Refresh Button */}
-          <button 
-            onClick={fetchOrders}
-            className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-            disabled={loading}
-          >
-            <RefreshCw size={18} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-            <span className="text-sm">Refresh</span>
-          </button>
-        </div>
-      </div>
+              {/* Refresh Button */}
+              <Button 
+                onClick={fetchOrders}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                className="ml-2"
+              >
+                <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error message */}
       {fetchError && (
@@ -468,187 +499,210 @@ const AdminOrders = () => {
       )}
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID Pesanan
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pelanggan
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produk
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jumlah
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tanggal
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center">
-                    <div className="flex justify-center">
-                      <RefreshCw size={24} className="animate-spin text-gray-400" />
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">Memuat data pesanan...</p>
-                  </td>
-                </tr>
-              ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    {fetchError ? 'Error loading orders' : 'Tidak ada pesanan yang ditemukan'}
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                      {order.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{order.customer_name || '-'}</div>
-                      <div className="text-sm text-gray-500">{order.customer_email || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.product?.name || 'Produk tidak ditemukan'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.quantity || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(order.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Rp{order.total_price?.toLocaleString('id-ID') || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span 
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleViewOrderDetails(order)}
-                        className="text-indigo-600 hover:text-indigo-900 flex items-center"
-                      >
-                        <Eye className="h-5 w-5 mr-1" />
-                        Detail
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[120px]">ID Pesanan</TableHead>
+                  <TableHead>Pelanggan</TableHead>
+                  <TableHead>Produk</TableHead>
+                  <TableHead>Jumlah</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <div className="flex justify-center">
+                        <RefreshCw size={24} className="animate-spin text-gray-400" />
+                      </div>
+                      <p className="mt-2 text-sm text-gray-500">Memuat data pesanan...</p>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredOrders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-gray-500">
+                      {fetchError ? 'Error loading orders' : 'Tidak ada pesanan yang ditemukan'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <TableRow key={order.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-primary">
+                        {order.id.substring(0, 8)}...
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{order.customer_name || '-'}</div>
+                        <div className="text-sm text-gray-500">{order.customer_email || '-'}</div>
+                      </TableCell>
+                      <TableCell>
+                        {order.product?.name || 'Produk tidak ditemukan'}
+                      </TableCell>
+                      <TableCell>
+                        {order.quantity || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {formatDate(order.created_at)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        Rp{order.total_price?.toLocaleString('id-ID') || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}
+                        >
+                          {order.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          onClick={() => handleViewOrderDetails(order)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary/80"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Detail
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Order Details Modal */}
       {isDetailsModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div 
-              className="fixed inset-0 transition-opacity" 
-              aria-hidden="true"
-              onClick={handleCloseModal}
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+          <div 
+            className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center bg-gray-50 px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Detail Pesanan - {selectedOrder.id.substring(0, 8)}...
+              </h3>
+              <Button
+                onClick={handleCloseModal}
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </Button>
             </div>
-
-            <div 
-              className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-            >
-              <div className="flex justify-between items-center bg-gray-50 px-6 py-4 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Detail Pesanan - {selectedOrder.id}
-                </h3>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Informasi Pelanggan</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Nama:</dt>
+                        <dd>{selectedOrder.customer_name || '-'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Email:</dt>
+                        <dd>{selectedOrder.customer_email || '-'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Telepon:</dt>
+                        <dd>{selectedOrder.customer_phone || '-'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Alamat:</dt>
+                        <dd className="text-right">{selectedOrder.customer_address || '-'}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Informasi Pesanan</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">ID Pesanan:</dt>
+                        <dd>{selectedOrder.id}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Tanggal:</dt>
+                        <dd>{formatDate(selectedOrder.created_at)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Produk:</dt>
+                        <dd>{selectedOrder.product?.name || 'Produk tidak ditemukan'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Jumlah:</dt>
+                        <dd>{selectedOrder.quantity || '-'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="font-medium text-gray-500">Total:</dt>
+                        <dd>Rp{selectedOrder.total_price?.toLocaleString('id-ID') || '-'}</dd>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <dt className="font-medium text-gray-500">Status:</dt>
+                        <dd>
+                          <span 
+                            className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(selectedOrder.status)}`}
+                          >
+                            {selectedOrder.status}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
               </div>
               
-              <div className="p-6">
-                <div className="grid grid-cols-1 gap-6 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <h4 className="font-medium text-gray-700 mb-2">Informasi Pelanggan</h4>
-                    <p className="text-sm mb-1"><span className="font-medium">Nama:</span> {selectedOrder.customer_name || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Email:</span> {selectedOrder.customer_email || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Telepon:</span> {selectedOrder.customer_phone || '-'}</p>
-                    <p className="text-sm"><span className="font-medium">Alamat:</span> {selectedOrder.customer_address || '-'}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <h4 className="font-medium text-gray-700 mb-2">Informasi Pesanan</h4>
-                    <p className="text-sm mb-1"><span className="font-medium">ID Pesanan:</span> {selectedOrder.id}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Tanggal:</span> {formatDate(selectedOrder.created_at)}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Produk:</span> {selectedOrder.product?.name || 'Produk tidak ditemukan'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Jumlah:</span> {selectedOrder.quantity || '-'}</p>
-                    <p className="text-sm mb-1"><span className="font-medium">Total:</span> Rp{selectedOrder.total_price?.toLocaleString('id-ID') || '-'}</p>
-                    <p className="text-sm">
-                      <span className="font-medium">Status:</span> 
-                      <span 
-                        className={`ml-1 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(selectedOrder.status)}`}
-                      >
-                        {selectedOrder.status}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-md mb-6">
-                  <h4 className="font-medium text-gray-700 mb-2">Perbarui Status Pesanan</h4>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Perbarui Status Pesanan</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'New'].map((status) => (
-                      <button
+                      <Button
                         key={status}
                         onClick={() => handleUpdateStatus(selectedOrder.id, status)}
                         disabled={selectedOrder.status === status}
-                        className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                          ${selectedOrder.status === status 
-                            ? `${getStatusBadgeClass(status)} cursor-not-allowed` 
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
+                        variant={selectedOrder.status === status ? "secondary" : "outline"}
+                        size="sm"
+                        className={selectedOrder.status === status ? 'cursor-not-allowed' : ''}
                       >
                         {selectedOrder.status === status && (
                           <Check size={14} className="mr-1" />
                         )}
                         {status}
-                      </button>
+                      </Button>
                     ))}
                   </div>
-                </div>
-              </div>
-              
-              <div className="px-6 py-4 bg-gray-50 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                >
-                  Tutup
-                </button>
-              </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="px-6 py-4 bg-gray-50 flex justify-end border-t">
+              <Button
+                onClick={handleCloseModal}
+                variant="outline"
+              >
+                Tutup
+              </Button>
             </div>
           </div>
         </div>
