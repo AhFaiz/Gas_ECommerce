@@ -54,7 +54,7 @@ const Navbar = () => {
           to="/" 
           className="flex items-center space-x-2 text-primary font-display font-bold text-2xl transition-transform-300 hover:scale-105"
         >
-          <span className="flex items-center">Gas<span className="text-foreground">ify</span></span>
+          <span className="flex items-center">Gas<span className="text-foreground">Rafi</span></span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-8">
