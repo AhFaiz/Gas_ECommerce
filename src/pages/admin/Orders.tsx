@@ -41,7 +41,7 @@ interface Order {
 }
 
 // Define a type for the allowed status values for type checking in the UI
-type OrderStatus = 'Pending' | 'Processing' | 'Cancelled';
+type OrderStatus = 'Pending' | 'Done' | 'Cancelled';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -354,7 +354,7 @@ const AdminOrders = () => {
   // Update the handleUpdateStatus to use string for status but ensure we only pass valid values
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     // Validate that the new status is one of the allowed values
-    const validStatus: OrderStatus[] = ['Pending', 'Processing', 'Cancelled'];
+    const validStatus: OrderStatus[] = ['Pending', 'Done', 'Cancelled'];
     if (!validStatus.includes(newStatus as OrderStatus)) {
       toast.error(`Invalid status: ${newStatus}`);
       return;
@@ -388,7 +388,7 @@ const AdminOrders = () => {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Processing': return 'bg-blue-100 text-blue-800';
+      case 'Done': return 'bg-green-100 text-green-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -454,7 +454,7 @@ const AdminOrders = () => {
                   <SelectContent>
                     <SelectItem value="All">Semua Status</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Done">Done</SelectItem>
                     <SelectItem value="Cancelled">Dibatalkan</SelectItem>
                   </SelectContent>
                 </Select>
@@ -670,7 +670,7 @@ const AdminOrders = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {['Pending', 'Processing', 'Cancelled'].map((status) => (
+                    {['Pending', 'Done', 'Cancelled'].map((status) => (
                       <Button
                         key={status}
                         onClick={() => handleUpdateStatus(selectedOrder.id, status)}
