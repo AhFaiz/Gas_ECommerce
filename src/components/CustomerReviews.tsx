@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import Testimonial from './Testimonial';
 import { Button } from './ui/button';
@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Review {
   id: string;
@@ -16,42 +17,49 @@ interface Review {
   rating: number;
 }
 
-const initialReviews: Review[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    role: 'Homeowner',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-    content: 'Excellent service and fast delivery! The quality of the gas cylinders is top-notch. Highly recommended for anyone looking for reliable suppliers.',
-    rating: 5
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    role: 'Restaurant Owner',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-    content: 'Been using their services for over 2 years. Professional team, competitive prices, and always on time. Perfect for our restaurant needs.',
-    rating: 5
-  },
-  {
-    id: '3',
-    name: 'Emma Williams',
-    role: 'Business Manager',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-    content: 'Great customer support and hassle-free ordering process. They truly understand what customers need. Will continue using their services.',
-    rating: 5
-  }
-];
-
 const CustomerReviews: React.FC = () => {
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch approved testimonials
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('testimonials')
+        .select('*')
+        .eq('approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedReviews: Review[] = (data || []).map((testimonial) => ({
+        id: testimonial.id,
+        name: testimonial.name,
+        role: 'Customer',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${testimonial.name}`,
+        content: testimonial.comment,
+        rating: testimonial.rating
+      }));
+
+      setReviews(formattedReviews);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim() || !comment.trim()) {
@@ -63,24 +71,40 @@ const CustomerReviews: React.FC = () => {
       return;
     }
 
-    const newReview: Review = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      role: 'Customer',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-      content: comment.trim(),
-      rating: rating
-    };
+    setSubmitting(true);
 
-    setReviews([newReview, ...reviews]);
-    setName('');
-    setComment('');
-    setRating(5);
-    
-    toast({
-      title: "Thank you!",
-      description: "Your review has been submitted successfully.",
-    });
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .insert([
+          {
+            name: name.trim(),
+            rating: rating,
+            comment: comment.trim(),
+            approved: false
+          }
+        ]);
+
+      if (error) throw error;
+
+      setName('');
+      setComment('');
+      setRating(5);
+      
+      toast({
+        title: "Thank you for your feedback!",
+        description: "Your review has been submitted and is pending approval.",
+      });
+    } catch (error) {
+      console.error('Error submitting testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit your review. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -98,15 +122,25 @@ const CustomerReviews: React.FC = () => {
 
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {reviews.map((review, index) => (
-            <div
-              key={review.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <Testimonial {...review} />
+          {loading ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              Loading reviews...
             </div>
-          ))}
+          ) : reviews.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              No reviews yet. Be the first to share your experience!
+            </div>
+          ) : (
+            reviews.map((review, index) => (
+              <div
+                key={review.id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <Testimonial {...review} />
+              </div>
+            ))
+          )}
         </div>
 
         {/* Submit Review Form */}
@@ -174,8 +208,9 @@ const CustomerReviews: React.FC = () => {
               type="submit"
               className="w-full"
               size="lg"
+              disabled={submitting}
             >
-              Submit Review
+              {submitting ? 'Submitting...' : 'Submit Review'}
             </Button>
           </form>
         </div>

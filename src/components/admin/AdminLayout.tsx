@@ -9,7 +9,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ const AdminLayout = () => {
     { name: 'Products', icon: Package, path: '/admin/products' },
     { name: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
     { name: 'Client Messages', icon: Users, path: '/admin/messages' },
+    { name: 'Customer Testimonials', icon: MessageSquare, path: '/admin/testimonials' },
   ];
 
   return (
