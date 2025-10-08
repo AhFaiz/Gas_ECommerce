@@ -4,6 +4,7 @@ import { ArrowRight, ShieldCheck, Truck, Clock, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import Hero from '../components/Hero';
+import CustomerReviews from '../components/CustomerReviews';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -42,6 +43,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+      
+      {/* Customer Reviews Section */}
+      <CustomerReviews />
       
       {/* CTA Section */}
       <section className="py-20 relative overflow-hidden">
