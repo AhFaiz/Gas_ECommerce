@@ -27,7 +27,7 @@ const CustomerReviews: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Fetch approved testimonials
+  // Fetch all testimonials
   useEffect(() => {
     fetchTestimonials();
   }, []);
@@ -37,7 +37,6 @@ const CustomerReviews: React.FC = () => {
       const { data, error } = await supabase
         .from('testimonials')
         .select('*')
-        .eq('approved', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -80,8 +79,7 @@ const CustomerReviews: React.FC = () => {
           {
             name: name.trim(),
             rating: rating,
-            comment: comment.trim(),
-            approved: false
+            comment: comment.trim()
           }
         ]);
 
@@ -91,9 +89,12 @@ const CustomerReviews: React.FC = () => {
       setComment('');
       setRating(5);
       
+      // Refetch testimonials to show the new one instantly
+      await fetchTestimonials();
+      
       toast({
         title: "Thank you for your feedback!",
-        description: "Your review has been submitted and is pending approval.",
+        description: "Your review has been submitted successfully.",
       });
     } catch (error) {
       console.error('Error submitting testimonial:', error);

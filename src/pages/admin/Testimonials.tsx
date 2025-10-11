@@ -9,8 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Star, Trash2, Check, X } from 'lucide-react';
+import { Star, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -60,30 +59,6 @@ const Testimonials = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApprove = async (id: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('testimonials')
-        .update({ approved: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      await fetchTestimonials();
-      toast({
-        title: 'Success',
-        description: `Testimonial ${!currentStatus ? 'approved' : 'unapproved'} successfully`,
-      });
-    } catch (error) {
-      console.error('Error updating testimonial:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update testimonial',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -142,7 +117,7 @@ const Testimonials = () => {
           Customer Testimonials
         </h1>
         <p className="text-muted-foreground">
-          Manage and approve customer reviews
+          View and manage customer reviews
         </p>
       </div>
 
@@ -153,7 +128,6 @@ const Testimonials = () => {
               <TableHead>Name</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead>Comment</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Submitted</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -161,7 +135,7 @@ const Testimonials = () => {
           <TableBody>
             {testimonials.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No testimonials found
                 </TableCell>
               </TableRow>
@@ -189,41 +163,17 @@ const Testimonials = () => {
                   <TableCell className="max-w-md">
                     <p className="line-clamp-2 text-sm">{testimonial.comment}</p>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={testimonial.approved ? 'default' : 'secondary'}>
-                      {testimonial.approved ? 'Approved' : 'Pending'}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(testimonial.created_at)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        size="sm"
-                        variant={testimonial.approved ? 'outline' : 'default'}
-                        onClick={() => handleApprove(testimonial.id, testimonial.approved)}
-                      >
-                        {testimonial.approved ? (
-                          <>
-                            <X className="h-4 w-4 mr-1" />
-                            Unapprove
-                          </>
-                        ) : (
-                          <>
-                            <Check className="h-4 w-4 mr-1" />
-                            Approve
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setDeleteId(testimonial.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDeleteId(testimonial.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
